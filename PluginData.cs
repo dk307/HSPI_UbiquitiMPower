@@ -1,10 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
-
-namespace Hspi
+﻿namespace Hspi
 {
-    using static System.FormattableString;
-
     /// <summary>
     /// Class to store static data for PlugIn
     /// </summary>

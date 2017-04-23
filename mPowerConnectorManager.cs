@@ -1,16 +1,12 @@
-﻿using System;
-using System.Net;
+﻿using HomeSeerAPI;
+using Hspi.Connector.Model;
+using Hspi.DeviceData;
+using NullGuard;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using Hspi.Connector.Model;
-using HomeSeerAPI;
-using Hspi.Exceptions;
-using NullGuard;
-using Scheduler.Classes;
-using Hspi.DeviceData;
-
-using System.Collections.Generic;
 
 namespace Hspi.Connector
 {

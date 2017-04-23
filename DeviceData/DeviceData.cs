@@ -1,8 +1,6 @@
 ﻿using HomeSeerAPI;
 using NullGuard;
-using Scheduler.Classes;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Hspi.DeviceData
 {

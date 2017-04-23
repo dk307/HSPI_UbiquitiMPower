@@ -2,6 +2,7 @@
 using HSCF.Communication.Scs.Communication;
 using HSCF.Communication.Scs.Communication.EndPoints.Tcp;
 using HSCF.Communication.ScsServices.Client;
+using Hspi.Connector;
 using Hspi.Exceptions;
 using NullGuard;
 using System;
@@ -10,8 +11,6 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
-using System.Threading.Tasks;
-using Hspi.Connector;
 
 namespace Hspi
 {

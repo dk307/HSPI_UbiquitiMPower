@@ -1,15 +1,14 @@
 ﻿using HomeSeerAPI;
+using NullGuard;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Threading;
-using System.Net;
-using System.Linq;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Reflection;
-using NullGuard;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading;
 
 namespace Hspi
 {

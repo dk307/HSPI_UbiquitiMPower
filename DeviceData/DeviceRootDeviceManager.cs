@@ -1,11 +1,11 @@
 ﻿using HomeSeerAPI;
+using Hspi.Connector;
+using Hspi.Connector.Model;
+using Hspi.Exceptions;
 using NullGuard;
 using Scheduler.Classes;
 using System;
 using System.Collections.Generic;
-using Hspi.Exceptions;
-using Hspi.Connector;
-using Hspi.Connector.Model;
 
 namespace Hspi.DeviceData
 {
