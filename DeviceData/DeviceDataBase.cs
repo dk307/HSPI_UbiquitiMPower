@@ -39,6 +39,7 @@ namespace Hspi.DeviceData
         public abstract string HSDeviceTypeString { get; }
         public abstract string InitialString { get; }
         public abstract double InitialValue { get; }
+        public virtual bool StatusDevice => true;
 
         protected static IList<VSVGPairs.VGPair> GetSingleGraphicsPairs(string fileName)
         {

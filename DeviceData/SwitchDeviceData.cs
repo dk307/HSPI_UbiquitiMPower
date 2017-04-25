@@ -3,19 +3,30 @@ using System.Collections.Generic;
 
 namespace Hspi.DeviceData
 {
+    using System.Threading.Tasks;
+    using Hspi.Connector;
+    using static System.FormattableString;
+    using System.Threading;
+
     internal class SwitchDeviceData : DeviceData
     {
         public SwitchDeviceData(int port) : base(port, DeviceType.Output)
         {
         }
 
+        public override bool StatusDevice => false;
+        public override string HSDeviceTypeString => Invariant($"{PluginData.PlugInName} Binary Switch");
+
+        private const int OnValue = 100;
+        private const int OffValue = 0;
+
         public override void Update(IHSApplication HS, double deviceValue)
         {
-            bool newValue = deviceValue != 0;
+            bool newValue = deviceValue != OffValue;
 
             if (!lastValue.HasValue || (newValue != lastValue.Value))
             {
-                UpdateDeviceData(HS, RefId, newValue ? 255 : 0);
+                UpdateDeviceData(HS, RefId, newValue ? OnValue : OffValue);
                 lastValue = newValue;
             }
         }
@@ -25,23 +36,48 @@ namespace Hspi.DeviceData
             get
             {
                 var pairs = new List<VSVGPairs.VSPair>();
-                pairs.Add(new VSVGPairs.VSPair(HomeSeerAPI.ePairStatusControl.Status)
+                pairs.Add(new VSVGPairs.VSPair(HomeSeerAPI.ePairStatusControl.Both)
                 {
                     PairType = VSVGPairs.VSVGPairType.SingleValue,
-                    Value = 0,
+                    Value = OffValue,
                     ControlUse = ePairControlUse._Off,
-                    Status = "Off"
+                    Status = "Off",
+                    Render = Enums.CAPIControlType.Button
                 });
 
-                pairs.Add(new VSVGPairs.VSPair(HomeSeerAPI.ePairStatusControl.Status)
+                pairs.Add(new VSVGPairs.VSPair(HomeSeerAPI.ePairStatusControl.Both)
                 {
                     PairType = VSVGPairs.VSVGPairType.SingleValue,
-                    Value = 255,
+                    Value = OnValue,
                     ControlUse = ePairControlUse._On,
-                    Status = "On"
+                    Status = "On",
+                    Render = Enums.CAPIControlType.Button
                 });
                 return pairs;
             }
+        }
+
+        public override Task HandleCommand(mPowerConnector connector, CancellationToken token, double value, ePairControlUse control)
+        {
+            bool output = false;
+            if (control == ePairControlUse._Off)
+            {
+                output = false;
+            }
+            else if (control == ePairControlUse._On)
+            {
+                output = true;
+            }
+            else if (value == OffValue)
+            {
+                output = false;
+            }
+            else if (value == OnValue)
+            {
+                output = true;
+            }
+
+            return connector.UpdateOutput(Port, output, token);
         }
 
         private bool? lastValue = null;

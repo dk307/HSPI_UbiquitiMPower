@@ -9,23 +9,18 @@ using System.Collections.Generic;
 
 namespace Hspi.DeviceData
 {
+    using System.Threading;
+    using System.Threading.Tasks;
     using static System.FormattableString;
 
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class DeviceRootDeviceManager
     {
-        private const char AddressSeparator = '.';
-        private readonly string deviceId;
-        private readonly IHSApplication HS;
-        private int? parentRefId = null;
-        private readonly IDictionary<string, DeviceData> currentChildDevices = new Dictionary<string, DeviceData>();
-        private readonly ILogger logger;
-
-        public DeviceRootDeviceManager(string deviceId, IHSApplication HS, ILogger logger)
+        public DeviceRootDeviceManager(string rootDeviceId, IHSApplication HS, ILogger logger)
         {
             this.logger = logger;
             this.HS = HS;
-            this.deviceId = deviceId;
+            this.rootDeviceId = rootDeviceId;
             GetCurrentDevices();
         }
 
@@ -51,23 +46,31 @@ namespace Hspi.DeviceData
                 return;
             }
 
-            string address = DeviceRootDeviceManager.CreateAddress(deviceId, port, deviceType);
+            var deviceIdentifier = new DeviceIdentifier(rootDeviceId, port, deviceType);
+
+            string address = deviceIdentifier.Address;
             if (!currentChildDevices.ContainsKey(address))
             {
-                CreateDevice(label, port, deviceType);
+                CreateDevice(label, deviceIdentifier);
             }
 
             currentChildDevices[address].Update(HS, value);
         }
 
-        private static string CreateRootDeviceAddress(string deviceId)
+        public async Task HandleCommand(DeviceIdentifier deviceIdentifier, CancellationToken token,
+                                        mPowerConnector connector, double value, ePairControlUse control)
         {
-            return Invariant($"{PluginData.PlugInName}{AddressSeparator}{deviceId}");
-        }
+            if (deviceIdentifier.DeviceId != rootDeviceId)
+            {
+                throw new ArgumentException("Invalid Device Identifier");
+            }
 
-        private static string CreateAddress(string deviceId, int port, DeviceType type)
-        {
-            return Invariant($"{CreateRootDeviceAddress(deviceId)}{AddressSeparator}{port}{AddressSeparator}{type}");
+            if (!currentChildDevices.TryGetValue(deviceIdentifier.Address, out var deviceData))
+            {
+                throw new HspiException(Invariant($"{deviceIdentifier.Address} Not Found."));
+            }
+
+            await deviceData.HandleCommand(connector, token, value, control);
         }
 
         private void GetCurrentDevices()
@@ -79,7 +82,7 @@ namespace Hspi.DeviceData
                 throw new HspiException(Invariant($"{PluginData.PlugInName} failed to get a device enumerator from HomeSeer."));
             }
 
-            string parentAddress = DeviceRootDeviceManager.CreateRootDeviceAddress(deviceId);
+            string parentAddress = DeviceIdentifier.CreateRootAddress(rootDeviceId);
             do
             {
                 DeviceClass device = deviceEnumerator.GetNext();
@@ -94,23 +97,27 @@ namespace Hspi.DeviceData
                     }
                     else if (address.StartsWith(parentAddress, StringComparison.Ordinal))
                     {
-                        currentChildDevices.Add(address, GetDeviceData(device));
+                        DeviceData childDeviceData = GetDeviceData(device);
+                        if (childDeviceData != null)
+                        {
+                            currentChildDevices.Add(address, childDeviceData);
+                        }
                     }
                 }
             } while (!deviceEnumerator.Finished);
         }
 
-        private void CreateDevice([AllowNull]string label, int port, DeviceType deviceType)
+        private void CreateDevice([AllowNull]string label, DeviceIdentifier deviceIdentifier)
         {
             if (!parentRefId.HasValue)
             {
-                string parentAddress = CreateRootDeviceAddress(deviceId);
+                string parentAddress = deviceIdentifier.RootDeviceAddress;
                 var parentHSDevice = CreateDevice(null, parentAddress, new RootDeviceData());
                 parentRefId = parentHSDevice.get_Ref(HS);
             }
 
-            string address = DeviceRootDeviceManager.CreateAddress(deviceId, port, deviceType);
-            var childDevice = GetDevice(port, deviceType);
+            string address = deviceIdentifier.Address;
+            var childDevice = GetDevice(deviceIdentifier.Port, deviceIdentifier.DeviceType);
             childDevice.Label = label;
             var childHSDevice = CreateDevice(parentRefId.Value, address, childDevice);
             childDevice.RefId = childHSDevice.get_Ref(HS);
@@ -143,26 +150,13 @@ namespace Hspi.DeviceData
 
         private DeviceData GetDeviceData(DeviceClass hsDevice)
         {
-            var childAddress = hsDevice.get_Address(HS);
-
-            var parts = childAddress.Split(AddressSeparator);
-
-            if (parts.Length != 4)
+            var id = DeviceIdentifier.Identify(hsDevice);
+            if (id == null)
             {
                 return null;
             }
 
-            if (!int.TryParse(parts[2], out int port))
-            {
-                return null;
-            }
-
-            if (!Enum.TryParse(parts[3], out DeviceType deviceType))
-            {
-                return null;
-            }
-
-            var device = GetDevice(port, deviceType);
+            var device = GetDevice(id.Port, id.DeviceType);
             device.RefId = hsDevice.get_Ref(HS);
             return device;
         }
@@ -170,10 +164,12 @@ namespace Hspi.DeviceData
         /// <summary>
         /// Creates the HS device.
         /// </summary>
-        /// <param name="parent">The data for parent of device.</param>
-        /// <param name="rootDeviceData">The root device data.</param>
+        /// <param name="optionalParentRefId">The optional parent reference identifier.</param>
+        /// <param name="deviceAddress">The device address.</param>
         /// <param name="deviceData">The device data.</param>
-        /// <returns>New Device</returns>
+        /// <returns>
+        /// New Device
+        /// </returns>
         private DeviceClass CreateDevice(int? optionalParentRefId, string deviceAddress, DeviceDataBase deviceData)
         {
             logger.DebugLog(Invariant($"Creating Device with Address:{deviceAddress}"));
@@ -196,6 +192,22 @@ namespace Hspi.DeviceData
                 device.set_Last_Change(HS, DateTime.Now);
                 //device.set_Location2(HS, parent != null ? parent.get_Name(HS) : deviceData.Name);
                 device.set_Location(HS, PluginData.PlugInName);
+
+                device.MISC_Set(HS, Enums.dvMISC.SHOW_VALUES);
+                if (deviceData.StatusDevice)
+                {
+                    device.MISC_Set(HS, Enums.dvMISC.STATUS_ONLY);
+                    device.MISC_Clear(HS, Enums.dvMISC.AUTO_VOICE_COMMAND);
+                    device.MISC_Clear(HS, Enums.dvMISC.SET_DOES_NOT_CHANGE_LAST_CHANGE);
+                    device.set_Status_Support(HS, false);
+                }
+                else
+                {
+                    device.MISC_Set(HS, Enums.dvMISC.SET_DOES_NOT_CHANGE_LAST_CHANGE);
+                    device.MISC_Set(HS, Enums.dvMISC.AUTO_VOICE_COMMAND);
+                    device.set_Status_Support(HS, true);
+                }
+
                 var pairs = deviceData.StatusPairs;
                 foreach (var pair in pairs)
                 {
@@ -207,12 +219,6 @@ namespace Hspi.DeviceData
                 {
                     HS.DeviceVGP_AddPair(refId, gpair);
                 }
-
-                device.MISC_Set(HS, Enums.dvMISC.STATUS_ONLY);
-                device.MISC_Set(HS, Enums.dvMISC.SHOW_VALUES);
-                device.MISC_Clear(HS, Enums.dvMISC.AUTO_VOICE_COMMAND);
-                device.MISC_Clear(HS, Enums.dvMISC.SET_DOES_NOT_CHANGE_LAST_CHANGE);
-                device.set_Status_Support(HS, false);
 
                 DeviceClass parent = null;
                 if (optionalParentRefId.HasValue)
@@ -234,5 +240,11 @@ namespace Hspi.DeviceData
 
             return device;
         }
+
+        private readonly string rootDeviceId;
+        private readonly IHSApplication HS;
+        private int? parentRefId = null;
+        private readonly IDictionary<string, DeviceData> currentChildDevices = new Dictionary<string, DeviceData>();
+        private readonly ILogger logger;
     };
 }

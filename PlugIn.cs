@@ -1,10 +1,14 @@
-﻿using Hspi.Connector;
+﻿using HomeSeerAPI;
+using Hspi.Connector;
+using Hspi.DeviceData;
 using NullGuard;
+using Scheduler.Classes;
 using System;
 using System.Collections.Generic;
 
 namespace Hspi
 {
+    using Hspi.Exceptions;
     using static System.FormattableString;
 
     /// <summary>
@@ -15,7 +19,7 @@ namespace Hspi
     internal class PlugIn : HspiBase
     {
         public PlugIn()
-            : base(PluginData.PlugInName)
+            : base(PluginData.PlugInName, supportConfigDevice: true)
         {
         }
 
@@ -121,6 +125,36 @@ namespace Hspi
             }
 
             return string.Empty;
+        }
+
+        public override void SetIOMulti(List<CAPI.CAPIControl> colSend)
+        {
+            foreach (var control in colSend)
+            {
+                try
+                {
+                    int refId = control.Ref;
+                    DeviceClass deviceClass = (DeviceClass)HS.GetDeviceByRef(refId);
+
+                    var deviceIdentifier = DeviceIdentifier.Identify(deviceClass);
+
+                    lock (connectorManagerLock)
+                    {
+                        if (connectorManager.TryGetValue(deviceIdentifier.DeviceId, out var connector))
+                        {
+                            connector.HandleCommand(deviceIdentifier, control.ControlValue, control.ControlUse).Wait();
+                        }
+                        else
+                        {
+                            throw new HspiException(Invariant($"{refId} Device Not Found for processing."));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogError(Invariant($"Failed With {ex.Message}"));
+                }
+            }
         }
 
         private void RegisterConfigPage()

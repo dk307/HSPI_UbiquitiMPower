@@ -106,6 +106,7 @@
     <Compile Include="DeviceData\CurrentDeviceData.cs" />
     <Compile Include="DeviceData\DeviceData.cs" />
     <Compile Include="DeviceData\DeviceDataBase.cs" />
+    <Compile Include="DeviceData\DeviceIdentifier.cs" />
     <Compile Include="DeviceData\DeviceRootDeviceManager.cs" />
     <Compile Include="DeviceData\EnergyDeviceData.cs" />
     <Compile Include="DeviceData\NumberDeviceData.cs" />

@@ -23,8 +23,8 @@ namespace Hspi.Connector
             rootDeviceData = new DeviceRootDeviceManager(device.Id, this.HS, logger);
 
             combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken, instanceCancellationSource.Token);
-            runTask = Task.Factory.StartNew(Run, Token);
-            processTask = Task.Factory.StartNew(ProcessUpdates, Token, TaskCreationOptions.LongRunning, TaskScheduler.Current);
+            runTask = Task.Factory.StartNew(ManageConnection, Token);
+            processTask = Task.Factory.StartNew(ProcessDeviceUpdates, Token, TaskCreationOptions.LongRunning, TaskScheduler.Current);
         }
 
         public void Cancel()
@@ -34,7 +34,26 @@ namespace Hspi.Connector
             processTask.Wait();
         }
 
-        private async Task Run()
+        public async Task HandleCommand(DeviceIdentifier deviceIdentifier, double value, ePairControlUse control)
+        {
+            if (deviceIdentifier.DeviceId != Device.Id)
+            {
+                throw new ArgumentException("Invalid Device Identifier");
+            }
+
+            // This function runs in separate thread than main run
+            await rootDeviceDataLock.WaitAsync(Token);
+            try
+            {
+                await rootDeviceData.HandleCommand(deviceIdentifier, Token, connector, value, control);
+            }
+            finally
+            {
+                rootDeviceDataLock.Release();
+            }
+        }
+
+        private async Task ManageConnection()
         {
             while (!Token.IsCancellationRequested)
             {
@@ -49,15 +68,24 @@ namespace Hspi.Connector
             }
         }
 
-        private void ProcessUpdates()
+        private async Task ProcessDeviceUpdates()
         {
+            // this function does not need any lock as all data is given to it
             try
             {
                 while (!Token.IsCancellationRequested)
                 {
                     if (changedPorts.TryTake(out var sensorData, -1, Token))
                     {
-                        rootDeviceData.ProcessSensorData(sensorData, Device.EnabledTypes);
+                        await rootDeviceDataLock.WaitAsync(Token);
+                        try
+                        {
+                            rootDeviceData.ProcessSensorData(sensorData, Device.EnabledTypes);
+                        }
+                        finally
+                        {
+                            rootDeviceDataLock.Release();
+                        }
                     }
                 }
             }
@@ -161,20 +189,22 @@ namespace Hspi.Connector
 
         private async Task Connect()
         {
-            try
+            if (connector == null)
             {
-                if (connector == null)
+                mPowerConnector newConnector = null;
+                try
                 {
-                    connector = new mPowerConnector(Device.DeviceIP, logger);
-                    connector.PortsChanged += Connector_PortsChanged;
+                    newConnector = new mPowerConnector(Device.DeviceIP, logger);
+                    newConnector.PortsChanged += Connector_PortsChanged;
 
-                    await connector.Connect(Device.Username, Device.Password, Token).ConfigureAwait(false);
+                    await newConnector.Connect(Device.Username, Device.Password, Token).ConfigureAwait(false);
+                    connector = newConnector;
                 }
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(Invariant($"Failed to Connect to {Device.DeviceIP} with {ex.Message}"));
-                DisposeConnector();
+                catch (Exception ex)
+                {
+                    logger.LogWarning(Invariant($"Failed to Connect to {Device.DeviceIP} with {ex.Message}"));
+                    newConnector?.Dispose();
+                }
             }
         }
 
@@ -192,21 +222,10 @@ namespace Hspi.Connector
             }
         }
 
-        private CancellationToken Token => combinedCancellationSource.Token;
-
-        private mPowerConnector connector;
-        private readonly CancellationTokenSource combinedCancellationSource;
-        private readonly CancellationTokenSource instanceCancellationSource = new CancellationTokenSource();
-        private readonly ILogger logger;
-        private readonly IHSApplication HS;
-        private readonly BlockingCollection<SensorData> changedPorts = new BlockingCollection<SensorData>();
-        private readonly DeviceRootDeviceManager rootDeviceData;
-        private readonly Task runTask;
-        private readonly Task processTask;
-
         #region IDisposable Support
 
         private bool disposedValue = false; // To detect redundant calls
+
         public MPowerDevice Device { get; }
 
         protected virtual void Dispose(bool disposing)
@@ -217,11 +236,13 @@ namespace Hspi.Connector
                 {
                     instanceCancellationSource.Cancel();
                     instanceCancellationSource.Dispose();
+                    combinedCancellationSource.Dispose();
 
                     runTask.Dispose();
                     processTask.Dispose();
                     changedPorts.Dispose();
                     DisposeConnector();
+                    rootDeviceDataLock.Dispose();
                 }
 
                 disposedValue = true;
@@ -234,5 +255,17 @@ namespace Hspi.Connector
         }
 
         #endregion IDisposable Support
+
+        private CancellationToken Token => combinedCancellationSource.Token;
+        private volatile mPowerConnector connector;
+        private readonly CancellationTokenSource combinedCancellationSource;
+        private readonly CancellationTokenSource instanceCancellationSource = new CancellationTokenSource();
+        private readonly ILogger logger;
+        private readonly IHSApplication HS;
+        private readonly BlockingCollection<SensorData> changedPorts = new BlockingCollection<SensorData>();
+        private readonly DeviceRootDeviceManager rootDeviceData;
+        private readonly Task runTask;
+        private readonly Task processTask;
+        private readonly SemaphoreSlim rootDeviceDataLock = new SemaphoreSlim(1);
     }
 }

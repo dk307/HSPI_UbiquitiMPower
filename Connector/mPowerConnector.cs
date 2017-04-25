@@ -12,6 +12,7 @@ using WebSocket4Net;
 
 namespace Hspi.Connector
 {
+    using Hspi.Exceptions;
     using static System.FormattableString;
 
     // Based on https://github.com/lnaundorf/pimatic-mpower/blob/master/mpower.coffee
@@ -124,7 +125,7 @@ namespace Hspi.Connector
             logger.DebugLog(Invariant($"Updating {port} state for {newState}"));
 
             var putUrl = new Uri($"http://{DeviceIP}/sensors/{port}");
-            string formDataString = $"output={(newState ? 1 : 0)}";
+            string formDataString = Invariant($"output={(newState ? 1 : 0)}");
             HttpWebRequest request = CreateFormWebRequest(putUrl, formDataString, "PUT");
 
             string result = await ProcessRequest(request, token).ConfigureAwait(false);
@@ -133,9 +134,9 @@ namespace Hspi.Connector
             if (data.Status != "success")
             {
                 string error = Invariant($"Failed to update Port:{port} with {data.Status ?? string.Empty}");
-                throw new Exception(error);
+                throw new HspiException(error);
             }
-            logger.LogInfo(Invariant($"Updated {port} state for {newState}"));
+            logger.DebugLog(Invariant($"Updated {port} state for {newState}"));
         }
 
         public async Task UpdateAllSensorData(CancellationToken token)
