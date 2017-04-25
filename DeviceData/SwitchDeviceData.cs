@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace Hspi.DeviceData
 {
-    using System.Threading.Tasks;
     using Hspi.Connector;
-    using static System.FormattableString;
     using System.Threading;
+    using System.Threading.Tasks;
+    using static System.FormattableString;
 
     internal class SwitchDeviceData : DeviceData
     {
@@ -57,7 +57,7 @@ namespace Hspi.DeviceData
             }
         }
 
-        public override Task HandleCommand(mPowerConnector connector, CancellationToken token, double value, ePairControlUse control)
+        public override Task HandleCommand(MPowerConnector connector, CancellationToken token, double value, ePairControlUse control)
         {
             bool output = false;
             if (control == ePairControlUse._Off)

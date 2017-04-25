@@ -58,7 +58,7 @@ namespace Hspi.DeviceData
         }
 
         public async Task HandleCommand(DeviceIdentifier deviceIdentifier, CancellationToken token,
-                                        mPowerConnector connector, double value, ePairControlUse control)
+                                        MPowerConnector connector, double value, ePairControlUse control)
         {
             if (deviceIdentifier.DeviceId != rootDeviceId)
             {

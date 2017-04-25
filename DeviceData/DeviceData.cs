@@ -4,11 +4,11 @@ using System.Collections.Generic;
 
 namespace Hspi.DeviceData
 {
-    using System;
     using Hspi.Connector;
-    using static System.FormattableString;
-    using System.Threading.Tasks;
+    using System;
     using System.Threading;
+    using System.Threading.Tasks;
+    using static System.FormattableString;
 
     /// <summary>
     ///  Base class for Child Devices
@@ -37,7 +37,7 @@ namespace Hspi.DeviceData
 
         public abstract void Update(IHSApplication HS, double deviceValue);
 
-        public virtual Task HandleCommand(mPowerConnector connector, CancellationToken token,
+        public virtual Task HandleCommand(MPowerConnector connector, CancellationToken token,
                                           double value, ePairControlUse control) => throw new NotImplementedException();
 
         public int Port { get; }

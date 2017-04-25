@@ -102,7 +102,7 @@
     <Compile Include="Connector\Model\PutResult.cs" />
     <Compile Include="Connector\Model\SensorData.cs" />
     <Compile Include="Connector\Model\WebSocketData.cs" />
-    <Compile Include="Connector\mPowerConnector.cs" />
+    <Compile Include="Connector\MPowerConnector.cs" />
     <Compile Include="DeviceData\CurrentDeviceData.cs" />
     <Compile Include="DeviceData\DeviceData.cs" />
     <Compile Include="DeviceData\DeviceDataBase.cs" />
@@ -115,9 +115,9 @@
     <Compile Include="DeviceData\SwitchDeviceData.cs" />
     <Compile Include="DeviceData\VoltsDeviceData.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="mPowerConnectorManager.cs" />
     <Compile Include="EnumHelper.cs" />
     <Compile Include="HSPI.cs" />
+    <Compile Include="MPowerConnectorManager.cs" />
     <Compile Include="PlugIn.cs" />
     <Compile Include="PluginConfig.cs" />
     <Compile Include="PluginData.cs" />

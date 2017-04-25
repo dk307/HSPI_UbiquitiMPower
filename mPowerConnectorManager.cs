@@ -13,9 +13,9 @@ namespace Hspi.Connector
     using static System.FormattableString;
 
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
-    internal class mPowerConnectorManager : IDisposable
+    internal class MPowerConnectorManager : IDisposable
     {
-        public mPowerConnectorManager(IHSApplication HS, MPowerDevice device, ILogger logger, CancellationToken shutdownToken)
+        public MPowerConnectorManager(IHSApplication HS, MPowerDevice device, ILogger logger, CancellationToken shutdownToken)
         {
             this.HS = HS;
             this.logger = logger;
@@ -191,10 +191,10 @@ namespace Hspi.Connector
         {
             if (connector == null)
             {
-                mPowerConnector newConnector = null;
+                MPowerConnector newConnector = null;
                 try
                 {
-                    newConnector = new mPowerConnector(Device.DeviceIP, logger);
+                    newConnector = new MPowerConnector(Device.DeviceIP, logger);
                     newConnector.PortsChanged += Connector_PortsChanged;
 
                     await newConnector.Connect(Device.Username, Device.Password, Token).ConfigureAwait(false);
@@ -257,7 +257,7 @@ namespace Hspi.Connector
         #endregion IDisposable Support
 
         private CancellationToken Token => combinedCancellationSource.Token;
-        private volatile mPowerConnector connector;
+        private volatile MPowerConnector connector;
         private readonly CancellationTokenSource combinedCancellationSource;
         private readonly CancellationTokenSource instanceCancellationSource = new CancellationTokenSource();
         private readonly ILogger logger;

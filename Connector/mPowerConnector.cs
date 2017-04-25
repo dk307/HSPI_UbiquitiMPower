@@ -16,7 +16,7 @@ namespace Hspi.Connector
     using static System.FormattableString;
 
     // Based on https://github.com/lnaundorf/pimatic-mpower/blob/master/mpower.coffee
-    internal class mPowerConnector : IDisposable
+    internal class MPowerConnector : IDisposable
     {
         public event EventHandler<IList<SensorData>> PortsChanged;
 
@@ -42,7 +42,7 @@ namespace Hspi.Connector
 
         public CancellationToken ConnectionClosed => cancelationTokenSourceForCompleted.Token;
 
-        public mPowerConnector(IPAddress deviceIP, ILogger logger)
+        public MPowerConnector(IPAddress deviceIP, ILogger logger)
         {
             this.logger = logger;
             DeviceIP = deviceIP;

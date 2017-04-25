@@ -66,12 +66,12 @@ namespace Hspi
                         {
                             oldConnector.Cancel();
                             oldConnector.Dispose();
-                            connectorManager[device.Key] = new mPowerConnectorManager(HS, device.Value, this as ILogger, ShutdownCancellationToken);
+                            connectorManager[device.Key] = new MPowerConnectorManager(HS, device.Value, this as ILogger, ShutdownCancellationToken);
                         }
                     }
                     else
                     {
-                        connectorManager.Add(device.Key, new mPowerConnectorManager(HS, device.Value, this as ILogger, ShutdownCancellationToken));
+                        connectorManager.Add(device.Key, new MPowerConnectorManager(HS, device.Value, this as ILogger, ShutdownCancellationToken));
                     }
                 }
 
@@ -210,7 +210,7 @@ namespace Hspi
         }
 
         private readonly object connectorManagerLock = new object();
-        private readonly IDictionary<string, mPowerConnectorManager> connectorManager = new Dictionary<string, mPowerConnectorManager>();
+        private readonly IDictionary<string, MPowerConnectorManager> connectorManager = new Dictionary<string, MPowerConnectorManager>();
         private ConfigPage configPage;
         private PluginConfig pluginConfig;
         private const int ActionRefreshTANumber = 1;
