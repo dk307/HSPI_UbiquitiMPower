@@ -174,8 +174,6 @@ namespace Hspi
         {
             StringBuilder stb = new StringBuilder();
 
-            //stb.Append(PageBuilderAndMenu.clsPageBuilder.FormStart("ftmSettings", "IdSettings", "Post"));
-
             stb.Append(@"<div>");
             stb.Append(@"<table class='full_width_table'");
             stb.Append("<tr height='5'><td colspane=5></td></tr>");
@@ -217,7 +215,6 @@ namespace Hspi
             stb.Append(@"<tr height='5'><td colspan=5></td></tr>");
             stb.Append(@" </table>");
             stb.Append(@"</div>");
-            //stb.Append(PageBuilderAndMenu.clsPageBuilder.FormEnd());
 
             return stb.ToString();
         }
