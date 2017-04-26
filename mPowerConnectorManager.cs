@@ -1,6 +1,7 @@
 ﻿using HomeSeerAPI;
 using Hspi.Connector.Model;
 using Hspi.DeviceData;
+using Hspi.Exceptions;
 using NullGuard;
 using System;
 using System.Collections.Concurrent;
@@ -10,7 +11,6 @@ using System.Threading.Tasks;
 
 namespace Hspi.Connector
 {
-    using Hspi.Exceptions;
     using static System.FormattableString;
 
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]

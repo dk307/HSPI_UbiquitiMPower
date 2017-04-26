@@ -4,14 +4,14 @@ using Scheduler;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web;
-using System.Linq;
 
 namespace Hspi
 {
-    using System.Globalization;
     using static System.FormattableString;
 
     /// <summary>
@@ -21,9 +21,6 @@ namespace Hspi
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class ConfigPage : PageBuilderAndMenu.clsPageBuilder
     {
-        private const string IdPrefix = "id_";
-        private const int PortsMax = 8;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfigPage" /> class.
         /// </summary>
@@ -349,5 +346,7 @@ namespace Hspi
         private const string DeleteDeviceName = "DeleteDeviceName";
         private const string CancelDeviceName = "CancelDeviceName";
         private const string NameId = "NameId";
+        private const string IdPrefix = "id_";
+        private const int PortsMax = 8;
     }
 }
