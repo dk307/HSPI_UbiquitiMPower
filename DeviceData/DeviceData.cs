@@ -6,6 +6,7 @@ namespace Hspi.DeviceData
 {
     using Hspi.Connector;
     using System;
+    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
     using static System.FormattableString;
@@ -48,6 +49,6 @@ namespace Hspi.DeviceData
         public override string InitialString => "--";
         public override double InitialValue => 0D;
 
-        public override IList<VSVGPairs.VGPair> GraphicsPairs => new List<VSVGPairs.VGPair>();
+        public override IList<VSVGPairs.VGPair> GraphicsPairs => GetSingleGraphicsPairs("electricity.gif");
     };
 }

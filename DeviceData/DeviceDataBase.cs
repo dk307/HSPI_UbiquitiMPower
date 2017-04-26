@@ -47,7 +47,7 @@ namespace Hspi.DeviceData
             pairs.Add(new VSVGPairs.VGPair()
             {
                 PairType = VSVGPairs.VSVGPairType.Range,
-                Graphic = Path.Combine(PluginData.ImagesPathRoot, fileName),
+                Graphic = Path.Combine(PluginData.HSImagesPathRoot, fileName),
                 RangeStart = int.MinValue,
                 RangeEnd = int.MaxValue,
             });

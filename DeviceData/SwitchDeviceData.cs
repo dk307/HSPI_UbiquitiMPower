@@ -4,6 +4,7 @@ using System.Collections.Generic;
 namespace Hspi.DeviceData
 {
     using Hspi.Connector;
+    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
     using static System.FormattableString;
@@ -53,6 +54,29 @@ namespace Hspi.DeviceData
                     Status = "On",
                     Render = Enums.CAPIControlType.Button
                 });
+                return pairs;
+            }
+        }
+
+        public override IList<VSVGPairs.VGPair> GraphicsPairs
+        {
+            get
+            {
+                var pairs = new List<VSVGPairs.VGPair>();
+                pairs.Add(new VSVGPairs.VGPair()
+                {
+                    PairType = VSVGPairs.VSVGPairType.SingleValue,
+                    Graphic = Path.Combine(PluginData.HSImagesPathRoot, "on.gif"),
+                    Set_Value = OnValue
+                });
+
+                pairs.Add(new VSVGPairs.VGPair()
+                {
+                    PairType = VSVGPairs.VSVGPairType.SingleValue,
+                    Graphic = Path.Combine(PluginData.HSImagesPathRoot, "off.gif"),
+                    Set_Value = OffValue
+                });
+
                 return pairs;
             }
         }

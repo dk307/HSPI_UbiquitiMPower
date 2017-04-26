@@ -7,13 +7,16 @@ namespace Hspi
         [Description("Switch")]
         Output = 1,
 
+        [Description("Power(Watts)")]
         Power,
+
         Current,
         Voltage,
 
         [Description("Power Factor")]
         PowerFactor,
 
+        [Description("Kw Hours")]
         Energy,
     }
 }

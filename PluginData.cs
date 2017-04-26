@@ -1,4 +1,6 @@
-﻿namespace Hspi
+﻿using System.IO;
+
+namespace Hspi
 {
     /// <summary>
     /// Class to store static data for PlugIn
@@ -13,6 +15,6 @@
         /// <summary>
         /// The images path root for devices
         /// </summary>
-        public const string ImagesPathRoot = @"\images\UbiquitimPower\";
+        public static readonly string HSImagesPathRoot = Path.Combine(Path.DirectorySeparatorChar.ToString(), "images", "HomeSeer", "status");
     }
 }

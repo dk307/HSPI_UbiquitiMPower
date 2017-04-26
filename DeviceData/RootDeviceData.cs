@@ -31,7 +31,7 @@ namespace Hspi.DeviceData
             }
         }
 
-        public override IList<VSVGPairs.VGPair> GraphicsPairs => GetSingleGraphicsPairs("root.png");
+        public override IList<VSVGPairs.VGPair> GraphicsPairs => new List<VSVGPairs.VGPair>();
 
         public override string HSDeviceTypeString => Invariant($"{PluginData.PlugInName} Root Device");
         public override string InitialString => "Root";
