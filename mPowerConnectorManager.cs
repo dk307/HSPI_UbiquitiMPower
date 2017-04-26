@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Hspi.Connector
 {
+    using Hspi.Exceptions;
     using static System.FormattableString;
 
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
@@ -42,15 +43,24 @@ namespace Hspi.Connector
             }
 
             // This function runs in separate thread than main run
+
+            MPowerConnector connectorCopy;
             await rootDeviceDataLock.WaitAsync(Token);
             try
             {
-                await rootDeviceData.HandleCommand(deviceIdentifier, Token, connector, value, control);
+                connectorCopy = connector;
+                if (connectorCopy == null)
+                {
+                    throw new HspiException(Invariant($"No connection to Device for {Device.DeviceIP}"));
+                }
+                await rootDeviceData.HandleCommand(deviceIdentifier, Token, connectorCopy, value, control);
             }
             finally
             {
                 rootDeviceDataLock.Release();
             }
+
+            await connectorCopy.UpdateAllSensorData(Token);
         }
 
         private async Task ManageConnection()
@@ -80,7 +90,10 @@ namespace Hspi.Connector
                         await rootDeviceDataLock.WaitAsync(Token);
                         try
                         {
-                            rootDeviceData.ProcessSensorData(sensorData, Device.EnabledTypes);
+                            if (Device.EnabledPorts.Contains(sensorData.Port))
+                            {
+                                rootDeviceData.ProcessSensorData(sensorData, Device.EnabledTypes);
+                            }
                         }
                         finally
                         {

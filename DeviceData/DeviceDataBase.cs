@@ -73,17 +73,5 @@ namespace Hspi.DeviceData
                 HS.SetDeviceString(refId, InitialString, false);
             }
         }
-
-        /// <summary>
-        /// Updates the device data from string data
-        /// </summary>
-        /// <param name="HS">Homeseer application.</param>
-        /// <param name="refId">The HS reference identifier.</param>
-        /// <param name="data">string data.</param>
-        protected void UpdateDeviceData(IHSApplication HS, int refId, [AllowNull]string data)
-        {
-            HS.SetDeviceValueByRef(refId, InitialValue, false);
-            HS.SetDeviceString(refId, data, true);
-        }
     };
 }

@@ -7,9 +7,11 @@ using System.Collections.Specialized;
 using System.Net;
 using System.Text;
 using System.Web;
+using System.Linq;
 
 namespace Hspi
 {
+    using System.Globalization;
     using static System.FormattableString;
 
     /// <summary>
@@ -19,7 +21,8 @@ namespace Hspi
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class ConfigPage : PageBuilderAndMenu.clsPageBuilder
     {
-        protected const string IdPrefix = "id_";
+        private const string IdPrefix = "id_";
+        private const int PortsMax = 8;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConfigPage" /> class.
@@ -105,6 +108,12 @@ namespace Hspi
                     results.AppendLine("IP Address is not Valid.<br>");
                 }
 
+                string name = parts[NameId];
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    results.AppendLine("Name is not Valid.<br>");
+                }
+
                 if (string.IsNullOrWhiteSpace(parts[UserNameId]))
                 {
                     results.AppendLine("User name is not Valid.<br>");
@@ -119,7 +128,7 @@ namespace Hspi
                     string deviceId = parts[DeviceIdId];
                     if (string.IsNullOrWhiteSpace(deviceId))
                     {
-                        deviceId = Guid.NewGuid().ToString();
+                        deviceId = name.Replace(' ', '_').Replace('.', '_');
                     }
 
                     var enabledTypes = new SortedSet<DeviceType>();
@@ -132,7 +141,16 @@ namespace Hspi
                         }
                     }
 
-                    var device = new MPowerDevice(deviceId, ipAddress, parts[UserNameId], parts[PasswordId], enabledTypes);
+                    var enabledPorts = new SortedSet<int>();
+                    foreach (var item in Enumerable.Range(1, PortsMax))
+                    {
+                        if (parts[NameToId(item.ToString(CultureInfo.InvariantCulture))] == "checked")
+                        {
+                            enabledPorts.Add(item);
+                        }
+                    }
+
+                    var device = new MPowerDevice(deviceId, parts[NameId], ipAddress, parts[UserNameId], parts[PasswordId], enabledTypes, enabledPorts);
 
                     this.pluginConfig.AddDevice(device);
                     this.pluginConfig.FireConfigChanged();
@@ -163,13 +181,27 @@ namespace Hspi
 
             stb.Append(@"<div>");
             stb.Append(@"<table class='full_width_table'");
-            stb.Append("<tr height='5'><td style='width:25%'></td><td></td><td style='width:25%'></td></tr>");
-            stb.Append("<tr><td class='tableheader' colspan=3>Devices</td></tr>");
-            stb.Append("<tr><td class='tablecolumn'>Device IP Address</td><td class='tablecolumn'>Enabled Devices</td><td class='tablecolumn'></td></tr>");
+            stb.Append("<tr height='5'><td colspane=5></td></tr>");
+            stb.Append("<tr><td class='tableheader' colspan=5>Devices</td></tr>");
+            stb.Append(@"<tr><td class='tablecolumn'>Name</td>" +
+                        "<td class='tablecolumn'>Device IP Address</td>" +
+                        "<td class='tablecolumn'>Enabled Devices</td>" +
+                        "<td class='tablecolumn'>Enabled Ports</td>" +
+                        "<td class='tablecolumn'></td></tr>");
 
             foreach (var device in pluginConfig.Devices)
             {
-                stb.Append(Invariant($"<tr><td class='tablecell'>{device.Value.DeviceIP}</td><td class='tablecell'>"));
+                stb.Append(@"<tr>");
+                stb.Append(Invariant($"<td class='tablecell'>{device.Value.Name}</td>"));
+                stb.Append(Invariant($"<td class='tablecell'>{device.Value.DeviceIP}</td>"));
+                stb.Append(@"<td class='tablecell'>");
+                foreach (var item in device.Value.EnabledPorts)
+                {
+                    stb.Append(Invariant($"{item}<br>"));
+                }
+
+                stb.Append("</td>");
+                stb.Append(@"<td class='tablecell'>");
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
                     if (device.Value.EnabledTypes.Contains((DeviceType)item))
@@ -179,13 +211,14 @@ namespace Hspi
                     }
                 }
 
-                stb.Append(Invariant($"</td><td class='tablecell'>{PageTypeButton(Invariant($"Edit{device.Key}"), "Edit", EditDevicePageType, deviceId: device.Key)}</ td ></ tr > "));
+                stb.Append("</td>");
+                stb.Append(Invariant($"<td class='tablecell'>{PageTypeButton(Invariant($"Edit{device.Key}"), "Edit", EditDevicePageType, deviceId: device.Key)}</ td ></ tr > "));
             }
-            stb.Append(Invariant($"<tr><td colspan=3>{PageTypeButton("Add New Device", AddNewName, EditDevicePageType)}</td><td></td></tr>"));
-            stb.Append("<tr height='5'><td colspan=3></td></tr>");
-            stb.Append(Invariant($"<tr><td colspan=3></td></tr>"));
-            stb.Append(@"<tr><td colspan=3><div>Icons made by <a href='http://www.freepik.com' title='Freepik' target='_blank'>Freepik</a> from <a href='http://www.flaticon.com' title='Flaticon' target='_blank'>www.flaticon.com</a> is licensed by <a href='http://creativecommons.org/licenses/by/3.0/' title='Creative Commons BY 3.0' target='_blank'>CC 3.0 BY</a></div></td></tr>");
-            stb.Append(@"<tr height='5'><td colspan=3></td></tr>");
+            stb.Append(Invariant($"<tr><td colspan=5>{PageTypeButton("Add New Device", AddNewName, EditDevicePageType)}</td><td></td></tr>"));
+            stb.Append("<tr height='5'><td colspan=5></td></tr>");
+            stb.Append(Invariant($"<tr><td colspan=5></td></tr>"));
+            stb.Append(@"<tr><td colspan=5><div>Icons made by <a href='http://www.freepik.com' title='Freepik' target='_blank'>Freepik</a> from <a href='http://www.flaticon.com' title='Flaticon' target='_blank'>www.flaticon.com</a> is licensed by <a href='http://creativecommons.org/licenses/by/3.0/' title='Creative Commons BY 3.0' target='_blank'>CC 3.0 BY</a></div></td></tr>");
+            stb.Append(@"<tr height='5'><td colspan=5></td></tr>");
             stb.Append(@" </table>");
             stb.Append(@"</div>");
             //stb.Append(PageBuilderAndMenu.clsPageBuilder.FormEnd());
@@ -193,18 +226,15 @@ namespace Hspi
             return stb.ToString();
         }
 
-        private const string UserNameId = "UserNameId";
-        private const string PasswordId = "PasswordId";
-        private const string SaveDeviceName = "SaveButton";
-        private const string DeviceIdId = "DeviceIdId";
-
         private string BuildAddNewWebPageBody([AllowNull]MPowerDevice device)
         {
+            string name = device != null ? device.Name.ToString() : string.Empty;
             string ip = device != null ? device.DeviceIP.ToString() : string.Empty;
             string userName = device != null ? device.Username : string.Empty;
             string password = device != null ? device.Password : string.Empty;
             string id = device != null ? device.Id : string.Empty;
             ISet<DeviceType> enabledTypes = device != null ? device.EnabledTypes : new SortedSet<DeviceType>();
+            ISet<int> enabledPorts = device != null ? device.EnabledPorts : new SortedSet<int>();
             string buttonLabel = device != null ? "Save" : "Add";
             string header = device != null ? "Edit" : "Add New";
 
@@ -217,6 +247,7 @@ namespace Hspi
             stb.Append(@"<table class='full_width_table'");
             stb.Append("<tr height='5'><td style='width:25%'></td><td style='width:20%'></td><td style='width:55%'></td></tr>");
             stb.Append(Invariant($"<tr><td class='tableheader' colspan=3>{header}</td></tr>"));
+            stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{HtmlTextBox(NameId, name, @readonly: string.IsNullOrEmpty(id))}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>DeviceIP:</td><td class='tablecell' colspan=2>{HtmlTextBox(DeviceIPId, ip)}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>Username:</td><td class='tablecell' colspan=2>{HtmlTextBox(UserNameId, userName)}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>Password:</td><td class='tablecell' colspan=2>{HtmlTextBox(PasswordId, password, type: "password")}</td></tr>"));
@@ -228,15 +259,23 @@ namespace Hspi
             }
 
             stb.Append(@"</td><td class='tablecell'></td></tr>");
+            stb.Append(@"<tr><td class='tablecell'>Enabled Ports</td><td class='tablecell'>");
+            foreach (var item in Enumerable.Range(1, PortsMax))
+            {
+                string itemString = item.ToString(CultureInfo.InvariantCulture);
+                stb.Append(FormCheckBox(itemString, itemString, enabledPorts.Contains(item)));
+                stb.Append("<br>");
+            }
+            stb.Append(@"</td><td class='tablecell'></td></tr>");
             stb.Append(Invariant($"<tr><td colspan=3>{HtmlTextBox(DeviceIdId, id, type: "hidden")}<div id='{SaveErrorDivId}' style='color:Red'></div></td><td></td></tr>"));
             stb.Append(Invariant($"<tr><td colspan=3>{FormPageButton(SaveDeviceName, buttonLabel)}"));
 
             if (device != null)
             {
                 stb.Append(FormPageButton(DeleteDeviceName, "Delete"));
-                stb.Append(FormPageButton(CancelDeviceName, "Cancel"));
             }
 
+            stb.Append(FormPageButton(CancelDeviceName, "Cancel"));
             stb.Append(Invariant($"</td><td></td></tr>"));
             stb.Append("<tr height='5'><td colspan=3></td></tr>");
             stb.Append(@" </table>");
@@ -256,9 +295,9 @@ namespace Hspi
             return Invariant($"{IdPrefix}{NameToId(name)}");
         }
 
-        protected static string HtmlTextBox(string name, string defaultText, int size = 25, string type = "text")
+        protected static string HtmlTextBox(string name, string defaultText, int size = 25, string type = "text", bool @readonly = false)
         {
-            return Invariant($"<input type=\'{type}\' id=\'{NameToIdWithPrefix(name)}\' size=\'{size}\' name=\'{name}\' value=\'{defaultText}\'>");
+            return Invariant($"<input type=\'{type}\' id=\'{NameToIdWithPrefix(name)}\' size=\'{size}\' name=\'{name}\' value=\'{defaultText}\' {(@readonly ? "readonly" : string.Empty)}>");
         }
 
         protected string FormCheckBox(string name, string label, bool @checked)
@@ -293,8 +332,11 @@ namespace Hspi
             return b.Build();
         }
 
+        private const string UserNameId = "UserNameId";
+        private const string PasswordId = "PasswordId";
+        private const string SaveDeviceName = "SaveButton";
+        private const string DeviceIdId = "DeviceIdId";
         private const string PageTypeId = "type";
-
         private const string AddNewName = "Add New";
         private const string DebugLoggingId = "DebugLoggingId";
         private const string DeviceIPId = "DeviceIPId";
@@ -306,5 +348,6 @@ namespace Hspi
         private readonly PluginConfig pluginConfig;
         private const string DeleteDeviceName = "DeleteDeviceName";
         private const string CancelDeviceName = "CancelDeviceName";
+        private const string NameId = "NameId";
     }
 }

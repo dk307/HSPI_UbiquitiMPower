@@ -6,11 +6,11 @@ using NullGuard;
 using Scheduler.Classes;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Hspi.DeviceData
 {
-    using System.Threading;
-    using System.Threading.Tasks;
     using static System.FormattableString;
 
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]

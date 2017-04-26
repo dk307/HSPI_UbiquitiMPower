@@ -1,9 +1,7 @@
 ﻿using HomeSeerAPI;
-using NullGuard;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -14,49 +12,6 @@ namespace Hspi
 {
     using static System.FormattableString;
 
-    internal enum DeviceType
-    {
-        [Description("Switch")]
-        Output = 1,
-
-        Power,
-        Current,
-        Voltage,
-
-        [Description("Power Factor")]
-        PowerFactor,
-
-        Energy,
-    }
-
-    [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
-    internal class MPowerDevice : IEquatable<MPowerDevice>
-    {
-        public MPowerDevice(string id, IPAddress deviceIP, string username, string password, ISet<DeviceType> enabledTypes)
-        {
-            Password = password;
-            Username = username;
-            DeviceIP = deviceIP;
-            EnabledTypes = enabledTypes;
-            Id = id;
-        }
-
-        public string Id { get; }
-        public ISet<DeviceType> EnabledTypes { get; }
-        public IPAddress DeviceIP { get; }
-        public string Username { get; }
-        public string Password { get; }
-
-        public bool Equals(MPowerDevice other)
-        {
-            return Id == other.Id &&
-                Username == other.Username &&
-                Password == other.Password &&
-                DeviceIP == other.DeviceIP &&
-                EnabledTypes.SetEquals(other.EnabledTypes);
-        }
-    }
-
     /// <summary>
     /// Class to store PlugIn Configuration
     /// </summary>
@@ -64,8 +19,6 @@ namespace Hspi
     internal class PluginConfig : IDisposable
     {
         public event EventHandler<EventArgs> ConfigChanged;
-
-        private const char DeviceIdsSeparator = '|';
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PluginConfig"/> class.
@@ -99,11 +52,23 @@ namespace Hspi
                     }
                 }
 
+                string enabledPortsString = GetValue(PortsEnabledKey, string.Empty, deviceId);
+
+                var enabledPorts = new SortedSet<int>();
+                foreach (var portString in enabledPortsString.Split(PortsEnabledSeparator))
+                {
+                    if (int.TryParse(portString, out var port))
+                    {
+                        enabledPorts.Add(port);
+                    }
+                }
+
+                string name = GetValue(NameKey, string.Empty, deviceId);
                 string username = GetValue(UserNameKey, string.Empty, deviceId);
                 string passwordEncrypted = GetValue(PasswordKey, string.Empty, deviceId);
                 string password = HS.DecryptString(passwordEncrypted, EncryptPassword);
 
-                devices.Add(deviceId, new MPowerDevice(deviceId, deviceIP, username, password, enabledTypes));
+                devices.Add(deviceId, new MPowerDevice(deviceId, name, deviceIP, username, password, enabledTypes, enabledPorts));
             }
         }
 
@@ -172,6 +137,7 @@ namespace Hspi
             {
                 devices[device.Id] = device;
 
+                SetValue(NameKey, device.Name, device.Id);
                 SetValue(IPAddressKey, device.DeviceIP.ToString(), device.Id);
                 SetValue(UserNameKey, device.Username, device.Id);
                 SetValue(PasswordKey, HS.EncryptString(device.Password, EncryptPassword), device.Id);
@@ -179,6 +145,17 @@ namespace Hspi
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
                     SetValue(item.ToString(), device.EnabledTypes.Contains((DeviceType)item), device.Id);
+                }
+
+                if (device.EnabledPorts.Count > 0)
+                {
+                    SetValue(PortsEnabledKey, device.EnabledPorts
+                                                    .Select(x => x.ToString(CultureInfo.InvariantCulture))
+                                                    .Aggregate((x, y) => x + PortsEnabledSeparator + y), device.Id);
+                }
+                else
+                {
+                    SetValue(PortsEnabledKey, string.Empty, device.Id);
                 }
 
                 SetValue(DeviceIds, devices.Keys.Aggregate((x, y) => x + DeviceIdsSeparator + y));
@@ -280,7 +257,8 @@ namespace Hspi
 
         #endregion IDisposable Support
 
-        private const string UserNameKey = "UserName";
+        private const string NameKey = "Name";
+        private const string UserNameKey = "Username";
         private const string PasswordKey = "Password";
         private const string DeviceIds = "DevicesIds";
         private const string DebugLoggingKey = "DebugLogging";
@@ -288,6 +266,9 @@ namespace Hspi
         private const string IPAddressKey = "IPAddress";
         private const string DefaultSection = "Settings";
         private const string EncryptPassword = "Not sure what is more secure";
+        private const string PortsEnabledKey = "PortsEnabled";
+        private const char DeviceIdsSeparator = '|';
+        private const char PortsEnabledSeparator = ',';
 
         private readonly Dictionary<string, MPowerDevice> devices = new Dictionary<string, MPowerDevice>();
         private readonly IHSApplication HS;

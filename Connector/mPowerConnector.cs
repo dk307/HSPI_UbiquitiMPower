@@ -120,13 +120,13 @@ namespace Hspi.Connector
             }
         }
 
-        public async Task UpdateOutput(int port, bool newState, CancellationToken token)
+        public async Task UpdateOutputDirectly(int port, bool newState, CancellationToken token)
         {
-            logger.DebugLog(Invariant($"Updating {port} state for {newState}"));
+            logger.DebugLog(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
 
             var putUrl = new Uri($"http://{DeviceIP}/sensors/{port}");
             string formDataString = Invariant($"output={(newState ? 1 : 0)}");
-            HttpWebRequest request = CreateFormWebRequest(putUrl, formDataString, "PUT");
+            HttpWebRequest request = CreateFormWebRequest(putUrl, formDataString, "POST");
 
             string result = await ProcessRequest(request, token).ConfigureAwait(false);
 
@@ -136,7 +136,24 @@ namespace Hspi.Connector
                 string error = Invariant($"Failed to update Port:{port} with {data.Status ?? string.Empty}");
                 throw new HspiException(error);
             }
-            logger.DebugLog(Invariant($"Updated {port} state for {newState}"));
+            logger.DebugLog(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
+        }
+
+        public async Task UpdateOutput(int port, bool newState, CancellationToken token)
+        {
+            var webSocketCopy = webSocket;
+            if (webSocketCopy.State == WebSocketState.Open)
+            {
+                logger.DebugLog(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
+                string jsonString = Invariant($"{{\"sensors\": [ {{ \"port\":{port},  \"output\":{(newState ? 1 : 0)} }}] }}");
+                webSocketCopy.Send(jsonString); // it is send async so we don't know what happens
+
+                logger.DebugLog(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
+            }
+            else
+            {
+                await UpdateOutputDirectly(port, newState, token);
+            }
         }
 
         public async Task UpdateAllSensorData(CancellationToken token)

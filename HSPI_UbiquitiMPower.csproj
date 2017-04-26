@@ -114,10 +114,12 @@
     <Compile Include="DeviceData\RootDeviceData.cs" />
     <Compile Include="DeviceData\SwitchDeviceData.cs" />
     <Compile Include="DeviceData\VoltsDeviceData.cs" />
+    <Compile Include="DeviceType.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="EnumHelper.cs" />
     <Compile Include="HSPI.cs" />
     <Compile Include="MPowerConnectorManager.cs" />
+    <Compile Include="MPowerDevice.cs" />
     <Compile Include="PlugIn.cs" />
     <Compile Include="PluginConfig.cs" />
     <Compile Include="PluginData.cs" />
