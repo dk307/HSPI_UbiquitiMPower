@@ -1,14 +1,15 @@
 ﻿using HomeSeerAPI;
 using Hspi.Connector;
 using Hspi.DeviceData;
+using Hspi.Exceptions;
 using NullGuard;
 using Scheduler.Classes;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Hspi
 {
-    using Hspi.Exceptions;
     using static System.FormattableString;
 
     /// <summary>
@@ -16,9 +17,9 @@ namespace Hspi
     /// </summary>
     /// <seealso cref="Hspi.HspiBase" />
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
-    internal class PlugIn : HspiBase
+    internal class Plugin : HspiBase
     {
-        public PlugIn()
+        public Plugin()
             : base(PluginData.PlugInName, supportConfigDevice: true)
         {
         }
@@ -154,6 +155,47 @@ namespace Hspi
                 {
                     LogError(Invariant($"Failed With {ex.Message}"));
                 }
+            }
+        }
+
+        public override string ConfigDevice(int deviceId, [AllowNull] string user, int userRights, bool newDevice)
+        {
+            if (newDevice)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                DeviceClass deviceClass = (DeviceClass)HS.GetDeviceByRef(deviceId);
+                var deviceIdentifier = DeviceIdentifier.Identify(deviceClass);
+
+                foreach (var device in pluginConfig.Devices)
+                {
+                    if (device.Key == deviceIdentifier.DeviceId)
+                    {
+                        StringBuilder stb = new StringBuilder();
+
+                        stb.Append(@"<table style='width:100%;border-spacing:0px;'");
+                        stb.Append("<tr height='5'><td style='width:25%'></td><td style='width:20%'></td><td style='width:55%'></td></tr>");
+                        stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{device.Value.Name}</td></tr>"));
+                        stb.Append(Invariant($"<tr><td class='tablecell'>Device IP:</td><td class='tablecell' colspan=2>{device.Value.DeviceIP}</td></tr>"));
+                        stb.Append(Invariant($"<tr><td class='tablecell'>Port:</td><td class='tablecell' colspan=2>{deviceIdentifier.Port}</td></tr>"));
+                        stb.Append(Invariant($"<tr><td class='tablecell'>Type:</td><td class='tablecell' colspan=2>{EnumHelper.GetDescription(deviceIdentifier.DeviceType)}</td></tr>"));
+                        stb.Append(Invariant($"</td><td></td></tr>"));
+                        stb.Append("<tr height='5'><td colspan=3></td></tr>");
+                        stb.Append(@" </table>");
+
+                        return stb.ToString();
+                    }
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                LogError(Invariant($"ConfigDevice for {deviceId} With {ex.Message}"));
+                return string.Empty;
             }
         }
 

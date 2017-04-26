@@ -1,8 +1,8 @@
-﻿[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1806:DoNotIgnoreMethodResults", MessageId = "System.Net.IPAddress.TryParse(System.String,System.Net.IPAddress@)", Scope = "member", Target = "Hspi.PluginConfig.#.ctor(HomeSeerAPI.IHSApplication)")]
-[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Scope = "member", Target = "Hspi.PlugIn.#RestartMPowerConnections()")]
-[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Scope = "type", Target = "Hspi.Connector.Model.InitialData")]
+﻿[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Scope = "type", Target = "Hspi.Connector.Model.InitialData")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Scope = "type", Target = "Hspi.Connector.Model.PutResult")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Scope = "type", Target = "Hspi.Connector.Model.SensorData")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Scope = "member", Target = "Hspi.Plugin.#RestartMPowerConnections()")]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1806:DoNotIgnoreMethodResults", MessageId = "System.Net.IPAddress.TryParse(System.String,System.Net.IPAddress@)", Scope = "member", Target = "Hspi.PluginConfig.#.ctor(HomeSeerAPI.IHSApplication)")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Scope = "type", Target = "Hspi.Connector.Model.WebSocketData")]
 // This file is used by Code Analysis to maintain SuppressMessage
 // attributes that are applied to this project.
