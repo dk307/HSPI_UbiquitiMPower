@@ -164,6 +164,10 @@ namespace Hspi
                 this.pluginConfig.FireConfigChanged();
                 this.divToUpdate.Add(SaveErrorDivId, RedirectPage(Invariant($"/{HttpUtility.UrlEncode(ConfigPage.Name)}")));
             }
+            else if (form == NameToIdWithPrefix(DebugLoggingId))
+            {
+                this.pluginConfig.DebugLogging = parts[NameToId(DebugLoggingId)] == "checked";
+            }
 
             return base.postBackProc(Name, data, user, userRights);
         }
@@ -211,6 +215,10 @@ namespace Hspi
             }
             stb.Append(Invariant($"<tr><td colspan=5>{PageTypeButton("Add New Device", AddNewName, EditDevicePageType)}</td><td></td></tr>"));
             stb.Append("<tr height='5'><td colspan=5></td></tr>");
+            stb.Append(PageBuilderAndMenu.clsPageBuilder.FormStart("ftmSettings", "Id", "Post"));
+            stb.Append(Invariant($"<tr><td colspan=5>Debug Logging Enabled:{FormCheckBox(DebugLoggingId, string.Empty, this.pluginConfig.DebugLogging, true)}</ td ></ tr > "));
+            stb.Append(PageBuilderAndMenu.clsPageBuilder.FormEnd());
+
             stb.Append(Invariant($"<tr><td colspan=5></td></tr>"));
             stb.Append(@"<tr height='5'><td colspan=5></td></tr>");
             stb.Append(@" </table>");
@@ -235,7 +243,6 @@ namespace Hspi
 
             stb.Append(PageBuilderAndMenu.clsPageBuilder.FormStart("ftmDeviceChange", "IdChange", "Post"));
 
-            //stb.Append(Invariant($"<tr><td class='tablecell'>Debug Logging Enabled:</td><td colspan=2 class='tablecell'>{FormCheckBox(DebugLoggingId, string.Empty, this.pluginConfig.DebugLogging)}</ td ></ tr > "));
             stb.Append(@"<div>");
             stb.Append(@"<table class='full_width_table'");
             stb.Append("<tr height='5'><td style='width:25%'></td><td style='width:20%'></td><td style='width:55%'></td></tr>");
@@ -293,13 +300,13 @@ namespace Hspi
             return Invariant($"<input type=\'{type}\' id=\'{NameToIdWithPrefix(name)}\' size=\'{size}\' name=\'{name}\' value=\'{defaultText}\' {(@readonly ? "readonly" : string.Empty)}>");
         }
 
-        protected string FormCheckBox(string name, string label, bool @checked)
+        protected string FormCheckBox(string name, string label, bool @checked, bool autoPostBack = false)
         {
             var cb = new clsJQuery.jqCheckBox(name, label, PageName, true, true)
             {
                 id = NameToIdWithPrefix(name),
                 @checked = @checked,
-                autoPostBack = false,
+                autoPostBack = autoPostBack,
             };
             return cb.Build();
         }
