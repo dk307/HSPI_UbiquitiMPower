@@ -1,14 +1,13 @@
 ﻿using HomeSeerAPI;
+using Hspi.Connector;
 using NullGuard;
+using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Hspi.DeviceData
 {
-    using Hspi.Connector;
-    using System;
-    using System.IO;
-    using System.Threading;
-    using System.Threading.Tasks;
     using static System.FormattableString;
 
     /// <summary>
@@ -36,6 +35,12 @@ namespace Hspi.DeviceData
             }
         }
 
+        public override void SetInitialData(IHSApplication HS, int refId)
+        {
+            HS.SetDeviceValueByRef(refId, 0D, false);
+            HS.set_DeviceInvalidValue(refId, true);
+        }
+
         public abstract void Update(IHSApplication HS, double deviceValue);
 
         public virtual Task HandleCommand(MPowerConnector connector, CancellationToken token,
@@ -46,8 +51,6 @@ namespace Hspi.DeviceData
         public DeviceType DeviceType { get; }
         public override int HSDeviceType => 0;
         public override string HSDeviceTypeString => Invariant($"{PluginData.PlugInName} Information Device");
-        public override string InitialString => "--";
-        public override double InitialValue => 0D;
 
         public override IList<VSVGPairs.VGPair> GraphicsPairs => GetSingleGraphicsPairs("electricity.gif");
     };

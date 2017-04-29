@@ -27,6 +27,7 @@ namespace Hspi.DeviceData
 
             if (!lastValue.HasValue || (newValue != lastValue.Value))
             {
+                HS.set_DeviceInvalidValue(RefId, false);
                 UpdateDeviceData(HS, RefId, newValue ? OnValue : OffValue);
                 lastValue = newValue;
             }

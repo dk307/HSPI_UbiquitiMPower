@@ -37,9 +37,14 @@ namespace Hspi.DeviceData
         public abstract int HSDeviceType { get; }
         public virtual DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI DeviceAPI => DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI.Plug_In;
         public abstract string HSDeviceTypeString { get; }
-        public abstract string InitialString { get; }
-        public abstract double InitialValue { get; }
         public virtual bool StatusDevice => true;
+
+        /// <summary>
+        /// Sets the initial data for the device.
+        /// </summary>
+        /// <param name="HS">The hs.</param>
+        /// <param name="RefId">The reference identifier.</param>
+        public abstract void SetInitialData(IHSApplication HS, int RefId);
 
         protected static IList<VSVGPairs.VGPair> GetSingleGraphicsPairs(string fileName)
         {
@@ -60,18 +65,10 @@ namespace Hspi.DeviceData
         /// <param name="HS">Homeseer application.</param>
         /// <param name="refId">The reference identifier.</param>
         /// <param name="data">Number data.</param>
-        protected void UpdateDeviceData(IHSApplication HS, int refId, double? data)
+        protected static void UpdateDeviceData(IHSApplication HS, int refId, double data)
         {
-            if (data.HasValue)
-            {
-                HS.SetDeviceString(refId, null, false);
-                HS.SetDeviceValueByRef(refId, data.Value, true);
-            }
-            else
-            {
-                // do not update double value on no value.
-                HS.SetDeviceString(refId, InitialString, false);
-            }
+            HS.set_DeviceInvalidValue(refId, false);
+            HS.SetDeviceValueByRef(refId, data, true);
         }
     };
 }

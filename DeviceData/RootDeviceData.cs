@@ -13,8 +13,10 @@ namespace Hspi.DeviceData
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class RootDeviceData : DeviceDataBase
     {
-        public RootDeviceData()
+        public override void SetInitialData(IHSApplication HS, int refID)
         {
+            HS.set_DeviceInvalidValue(refID, false);
+            HS.SetDeviceString(refID, "Root", false);
         }
 
         public override IList<VSVGPairs.VSPair> StatusPairs
@@ -34,10 +36,7 @@ namespace Hspi.DeviceData
         public override IList<VSVGPairs.VGPair> GraphicsPairs => new List<VSVGPairs.VGPair>();
 
         public override string HSDeviceTypeString => Invariant($"{PluginData.PlugInName} Root Device");
-        public override string InitialString => "Root";
-        public override double InitialValue => 0D;
         public override int HSDeviceType => (int)DeviceTypeInfo_m.DeviceTypeInfo.eDeviceType_Plugin.Root;
-
         public override string Name => "mPower Root Device";
     }
 }
