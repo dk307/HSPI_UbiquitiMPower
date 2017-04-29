@@ -240,7 +240,7 @@ namespace Hspi
             stb.Append(@"<table class='full_width_table'");
             stb.Append("<tr height='5'><td style='width:25%'></td><td style='width:20%'></td><td style='width:55%'></td></tr>");
             stb.Append(Invariant($"<tr><td class='tableheader' colspan=3>{header}</td></tr>"));
-            stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{HtmlTextBox(NameId, name, @readonly: string.IsNullOrEmpty(id))}</td></tr>"));
+            stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{HtmlTextBox(NameId, name, @readonly: !string.IsNullOrEmpty(id))}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>DeviceIP:</td><td class='tablecell' colspan=2>{HtmlTextBox(DeviceIPId, ip)}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>Username:</td><td class='tablecell' colspan=2>{HtmlTextBox(UserNameId, userName)}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>Password:</td><td class='tablecell' colspan=2>{HtmlTextBox(PasswordId, password, type: "password")}</td></tr>"));
