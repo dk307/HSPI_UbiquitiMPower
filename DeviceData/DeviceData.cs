@@ -51,7 +51,6 @@ namespace Hspi.DeviceData
         public DeviceType DeviceType { get; }
         public override int HSDeviceType => 0;
         public override string HSDeviceTypeString => Invariant($"{PluginData.PlugInName} Information Device");
-
         public override IList<VSVGPairs.VGPair> GraphicsPairs => GetSingleGraphicsPairs("electricity.gif");
     };
 }

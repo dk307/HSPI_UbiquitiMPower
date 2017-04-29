@@ -14,16 +14,17 @@ namespace Hspi.DeviceData
         {
             double MinDelta = MinDeltaForUpdate;
             double value = deviceValue / Denominator;
-            if (double.IsNaN(lastUpdate) || Math.Abs(lastUpdate - value) > MinDelta)
+            if (!lastUpdate.HasValue || Math.Abs(lastUpdate.Value - value) > MinDelta)
             {
                 UpdateDeviceData(HS, RefId, value);
                 lastUpdate = value;
             }
         }
 
+        public override bool StatusDevice => true;
+
         protected virtual double MinDeltaForUpdate => 0.01D;
         protected virtual double Denominator => 1D;
-
         public override DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI DeviceAPI => DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI.Energy;
 
         public override IList<VSVGPairs.VSPair> StatusPairs
@@ -45,8 +46,7 @@ namespace Hspi.DeviceData
         }
 
         protected virtual int RangeDecimals => 2;
-
         protected virtual string Suffix => string.Empty;
-        private double lastUpdate = double.NaN;
+        private double? lastUpdate = null;
     }
 }
