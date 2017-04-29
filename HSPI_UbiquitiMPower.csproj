@@ -14,6 +14,8 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -28,8 +30,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -102,7 +102,7 @@
     <Compile Include="Connector\Model\PutResult.cs" />
     <Compile Include="Connector\Model\SensorData.cs" />
     <Compile Include="Connector\Model\WebSocketData.cs" />
-    <Compile Include="Connector\MPowerConnector.cs" />
+    <Compile Include="Connector\MPowerConnector2.cs" />
     <Compile Include="DeviceData\CurrentDeviceData.cs" />
     <Compile Include="DeviceData\DeviceData.cs" />
     <Compile Include="DeviceData\DeviceDataBase.cs" />
@@ -118,7 +118,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="EnumHelper.cs" />
     <Compile Include="HSPI.cs" />
-    <Compile Include="MPowerConnectorManager.cs" />
+    <Compile Include="MPowerConnectorManager2.cs" />
     <Compile Include="MPowerDevice.cs" />
     <Compile Include="PlugIn.cs" />
     <Compile Include="PluginConfig.cs" />
