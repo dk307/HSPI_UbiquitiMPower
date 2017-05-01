@@ -41,15 +41,12 @@ namespace Hspi
                 string ipAddressString = GetValue(IPAddressKey, string.Empty, deviceId);
                 IPAddress.TryParse(ipAddressString, out var deviceIP);
 
-                var enabledTypes = new Dictionary<DeviceType, double>();
+                var resolution = new Dictionary<DeviceType, double>();
 
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
-                    var resolution = GetValue(item.ToString(), 0D, deviceId);
-                    if (resolution != 0)
-                    {
-                        enabledTypes.Add((DeviceType)item, resolution);
-                    }
+                    DeviceType deviceType = (DeviceType)item;
+                    resolution.Add(deviceType, GetValue(ResolutionKey(deviceType), GetDefaultResolution(deviceType), deviceId));
                 }
 
                 string enabledPortsString = GetValue(PortsEnabledKey, string.Empty, deviceId);
@@ -63,12 +60,21 @@ namespace Hspi
                     }
                 }
 
+                var enabledTypes = new SortedSet<DeviceType>();
+                foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
+                {
+                    if (GetValue(item.ToString(), false, deviceId))
+                    {
+                        enabledTypes.Add((DeviceType)item);
+                    }
+                }
+
                 string name = GetValue(NameKey, string.Empty, deviceId);
                 string username = GetValue(UserNameKey, string.Empty, deviceId);
                 string passwordEncrypted = GetValue(PasswordKey, string.Empty, deviceId);
                 string password = HS.DecryptString(passwordEncrypted, EncryptPassword);
 
-                devices.Add(deviceId, new MPowerDevice(deviceId, name, deviceIP, username, password, enabledTypes, enabledPorts));
+                devices.Add(deviceId, new MPowerDevice(deviceId, name, deviceIP, username, password, enabledTypes, resolution, enabledPorts));
             }
         }
 
@@ -130,6 +136,11 @@ namespace Hspi
             }
         }
 
+        private static string ResolutionKey(DeviceType deviceType)
+        {
+            return deviceType.ToString() + "Resolution";
+        }
+
         public void AddDevice(MPowerDevice device)
         {
             configLock.EnterWriteLock();
@@ -144,14 +155,12 @@ namespace Hspi
 
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
-                    if (device.EnabledTypesAndResolution.TryGetValue((DeviceType)item, out var value))
-                    {
-                        SetValue(item.ToString(), value, device.Id);
-                    }
-                    else
-                    {
-                        SetValue(item.ToString(), 0D, device.Id);
-                    }
+                    SetValue(item.ToString(), device.EnabledTypes.Contains((DeviceType)item), device.Id);
+                }
+
+                foreach (var pair in device.Resolution)
+                {
+                    SetValue(ResolutionKey(pair.Key), pair.Value, device.Id);
                 }
 
                 if (device.EnabledPorts.Count > 0)

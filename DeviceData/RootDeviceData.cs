@@ -37,6 +37,5 @@ namespace Hspi.DeviceData
         public override IList<VSVGPairs.VGPair> GraphicsPairs => new List<VSVGPairs.VGPair>();
         public override string HSDeviceTypeString => Invariant($"{PluginData.PlugInName} Root Device");
         public override int HSDeviceType => (int)DeviceTypeInfo_m.DeviceTypeInfo.eDeviceType_Plugin.Root;
-        public override string Name => "mPower Root Device";
     }
 }

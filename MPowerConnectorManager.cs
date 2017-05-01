@@ -91,7 +91,7 @@ namespace Hspi.Connector
                         {
                             if (Device.EnabledPorts.Contains(sensorData.Port))
                             {
-                                rootDeviceData.ProcessSensorData(sensorData, Device.EnabledTypesAndResolution);
+                                rootDeviceData.ProcessSensorData(Device, sensorData);
                             }
                         }
                         catch (Exception ex)

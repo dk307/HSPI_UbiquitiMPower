@@ -145,7 +145,8 @@ namespace Hspi
                         deviceId = name.Replace(' ', '_').Replace('.', '_');
                     }
 
-                    var enabledTypes = new Dictionary<DeviceType, double>();
+                    var enabledTypes = new SortedSet<DeviceType>();
+                    var resolution = new Dictionary<DeviceType, double>();
 
                     foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                     {
@@ -153,12 +154,14 @@ namespace Hspi
 
                         if (parts[NameToId(item.ToString())] == "checked")
                         {
-                            string value = parts[GetResolutionId(deviceType)];
+                            enabledTypes.Add(deviceType);
+                        }
 
-                            if (double.TryParse(value, out double resolution))
-                            {
-                                enabledTypes.Add((DeviceType)item, resolution);
-                            }
+                        string value = parts[GetResolutionId(deviceType)];
+
+                        if (double.TryParse(value, out double resolutionValue))
+                        {
+                            resolution.Add(deviceType, resolutionValue);
                         }
                     }
 
@@ -172,8 +175,8 @@ namespace Hspi
                     }
 
                     var device = new MPowerDevice(deviceId, parts[NameId], ipAddress,
-                                                  parts[UserNameId], parts[PasswordId],
-                                                  new ReadOnlyDictionary<DeviceType, double>(enabledTypes), enabledPorts);
+                                                  parts[UserNameId], parts[PasswordId], enabledTypes,
+                                                  resolution, enabledPorts);
 
                     this.pluginConfig.AddDevice(device);
                     this.pluginConfig.FireConfigChanged();
@@ -229,7 +232,7 @@ namespace Hspi
                 stb.Append(@"<td class='tablecell'>");
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
-                    if (device.Value.EnabledTypesAndResolution.ContainsKey((DeviceType)item))
+                    if (device.Value.EnabledTypes.Contains((DeviceType)item))
                     {
                         string description = EnumHelper.GetDescription((Enum)item);
                         stb.Append(Invariant($"{description}<br>"));
@@ -260,7 +263,8 @@ namespace Hspi
             string userName = device != null ? device.Username : string.Empty;
             string password = device != null ? device.Password : string.Empty;
             string id = device != null ? device.Id : string.Empty;
-            var enabledTypes = device != null ? device.EnabledTypesAndResolution :
+            var enabledTypes = device != null ? device.EnabledTypes : new SortedSet<DeviceType>();
+            var resolution = device != null ? device.Resolution :
                                 new ReadOnlyDictionary<DeviceType, double>(new Dictionary<DeviceType, double>());
             var enabledPorts = device != null ? device.EnabledPorts : new SortedSet<int>();
             string buttonLabel = device != null ? "Save" : "Add";
@@ -283,7 +287,7 @@ namespace Hspi
             {
                 var deviceType = (DeviceType)item;
                 string description = EnumHelper.GetDescription((Enum)item);
-                stb.Append(FormCheckBox(item.ToString(), description, enabledTypes.ContainsKey(deviceType)));
+                stb.Append(FormCheckBox(item.ToString(), description, enabledTypes.Contains(deviceType)));
                 stb.Append("<br>");
             }
 
@@ -296,7 +300,7 @@ namespace Hspi
                 if (deviceType == DeviceType.Output) continue;
                 stb.Append(Invariant($"<tr><td class='tablecell'>{description} Resolution:</td><td class='tablecell' colspan=2>"));
                 stb.Append(HtmlTextBox(GetResolutionId(deviceType),
-                                        enabledTypes.ContainsKey(deviceType) ? enabledTypes[deviceType].ToString(CultureInfo.InvariantCulture) :
+                                        enabledTypes.Contains(deviceType) ? resolution[deviceType].ToString(CultureInfo.InvariantCulture) :
                                                 PluginConfig.GetDefaultResolution(deviceType).ToString(CultureInfo.InvariantCulture),
                                         10));
                 stb.Append("&nbsp;");

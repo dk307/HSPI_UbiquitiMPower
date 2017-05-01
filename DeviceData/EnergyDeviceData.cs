@@ -8,8 +8,7 @@ namespace Hspi.DeviceData
         {
         }
 
-        protected override double Denominator => 1000D;
-
+        public override double Denominator => 1000D;
         public override int HSDeviceType => (int)DeviceTypeInfo_m.DeviceTypeInfo.eDeviceType_Energy.KWH;
     }
 }

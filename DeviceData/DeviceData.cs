@@ -23,8 +23,6 @@ namespace Hspi.DeviceData
             Port = port;
         }
 
-        public override string Name => EnumHelper.GetDescription(DeviceType);
-
         public override void SetInitialData(IHSApplication HS, int refId)
         {
             HS.SetDeviceValueByRef(refId, 0D, false);
@@ -36,6 +34,7 @@ namespace Hspi.DeviceData
         public virtual Task HandleCommand(MPowerConnector connector, CancellationToken token,
                                           double value, ePairControlUse control) => throw new NotImplementedException();
 
+        public virtual double Denominator => 1D;
         public int Port { get; }
         public int RefId { get; set; }
         public DeviceType DeviceType { get; }

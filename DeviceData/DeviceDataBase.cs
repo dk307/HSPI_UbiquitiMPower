@@ -33,7 +33,6 @@ namespace Hspi.DeviceData
         /// <returns></returns>
         public abstract IList<VSVGPairs.VGPair> GraphicsPairs { get; }
 
-        public abstract string Name { get; }
         public abstract int HSDeviceType { get; }
         public virtual DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI DeviceAPI => DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI.Plug_In;
         public abstract string HSDeviceTypeString { get; }

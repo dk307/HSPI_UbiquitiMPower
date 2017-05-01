@@ -1,5 +1,4 @@
 ﻿using HomeSeerAPI;
-using System;
 using System.Collections.Generic;
 
 namespace Hspi.DeviceData
@@ -10,9 +9,8 @@ namespace Hspi.DeviceData
         {
         }
 
-        public override void Update(IHSApplication HS, double deviceValue)
+        public override void Update(IHSApplication HS, double value)
         {
-            double value = deviceValue / Denominator;
             if (!lastUpdate.HasValue || lastUpdate.Value != value)
             {
                 UpdateDeviceData(HS, RefId, value);
@@ -21,7 +19,6 @@ namespace Hspi.DeviceData
         }
 
         public override bool StatusDevice => true;
-        protected virtual double Denominator => 1D;
         public override DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI DeviceAPI => DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI.Energy;
 
         public override IList<VSVGPairs.VSPair> StatusPairs

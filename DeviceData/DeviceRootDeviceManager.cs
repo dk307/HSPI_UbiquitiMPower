@@ -25,27 +25,31 @@ namespace Hspi.DeviceData
             GetCurrentDevices();
         }
 
-        public void ProcessSensorData(SensorData sensorData, IReadOnlyDictionary<DeviceType, double> updateTypesWithResolution)
+        public void ProcessSensorData(MPowerDevice device, SensorData sensorData)
         {
-            if (updateTypesWithResolution.Count == 0)
+            if ((device.EnabledTypes.Count == 0) || (device.EnabledPorts.Count == 0))
             {
                 return;
             }
 
-            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Current, sensorData.Current);
-            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Energy, sensorData.Energy);
-            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Output, sensorData.Output);
-            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Power, sensorData.Power);
-            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.PowerFactor, sensorData.PowerFactor);
-            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Voltage, sensorData.Voltage);
+            UpdateSensorValue(device, sensorData.Label, sensorData.Port, DeviceType.Current, sensorData.Current);
+            UpdateSensorValue(device, sensorData.Label, sensorData.Port, DeviceType.Energy, sensorData.Energy);
+            UpdateSensorValue(device, sensorData.Label, sensorData.Port, DeviceType.Output, sensorData.Output);
+            UpdateSensorValue(device, sensorData.Label, sensorData.Port, DeviceType.Power, sensorData.Power);
+            UpdateSensorValue(device, sensorData.Label, sensorData.Port, DeviceType.PowerFactor, sensorData.PowerFactor);
+            UpdateSensorValue(device, sensorData.Label, sensorData.Port, DeviceType.Voltage, sensorData.Voltage);
         }
 
-        private void UpdateSensorValue(IReadOnlyDictionary<DeviceType, double> updateTypes, [AllowNull]string label,
-                                       int port, DeviceType deviceType, double value)
+        private void UpdateSensorValue(MPowerDevice device, [AllowNull]string label, int port, DeviceType deviceType, double value)
         {
-            if (!updateTypes.TryGetValue(deviceType, out var resolution))
+            if (!device.EnabledTypes.Contains(deviceType))
             {
                 return;
+            }
+
+            if (!device.Resolution.TryGetValue(deviceType, out var resolutionValue))
+            {
+                resolutionValue = PluginConfig.GetDefaultResolution(deviceType);
             }
 
             var deviceIdentifier = new DeviceIdentifier(rootDeviceId, port, deviceType);
@@ -56,8 +60,12 @@ namespace Hspi.DeviceData
                 CreateDevice(label, deviceIdentifier);
             }
 
-            double roundedValue = Math.Round(value / resolution, 0, MidpointRounding.AwayFromZero) * resolution;
-            currentChildDevices[address].Update(HS, roundedValue);
+            var childDevice = currentChildDevices[address];
+
+            value /= childDevice.Denominator;
+
+            double roundedValue = Math.Round(value / resolutionValue, 0, MidpointRounding.AwayFromZero) * resolutionValue;
+            childDevice.Update(HS, roundedValue);
         }
 
         public async Task HandleCommand(DeviceIdentifier deviceIdentifier, CancellationToken token,
@@ -121,7 +129,7 @@ namespace Hspi.DeviceData
 
             string address = deviceIdentifier.Address;
             var childDevice = GetDevice(deviceIdentifier.Port, deviceIdentifier.DeviceType);
-            string childDeviceName = Invariant($"{ label ?? Invariant($"{deviceName} Port {deviceIdentifier.Port}")} {childDevice.Name}");
+            string childDeviceName = Invariant($"{ label ?? Invariant($"{deviceName} Port {deviceIdentifier.Port}")} {EnumHelper.GetDescription(childDevice.DeviceType)}");
             var childHSDevice = CreateDevice(parentRefId.Value, childDeviceName, address, childDevice);
             childDevice.RefId = childHSDevice.get_Ref(HS);
             currentChildDevices[address] = childDevice;
