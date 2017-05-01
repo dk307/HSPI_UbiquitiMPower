@@ -289,7 +289,7 @@ namespace Hspi
                     return string.Empty;
 
                 case DeviceType.Energy:
-                    return "kw Hours";
+                    return "KW Hours";
 
                 default:
                     return string.Empty;

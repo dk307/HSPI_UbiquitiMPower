@@ -23,17 +23,7 @@ namespace Hspi.DeviceData
             Port = port;
         }
 
-        public string Label { get; set; }
-
-        public override string Name
-        {
-            get
-            {
-                string label = Label ?? Invariant($"Port {Port}");
-                string typeDescription = EnumHelper.GetDescription(DeviceType);
-                return Invariant($"{label} {typeDescription}");
-            }
-        }
+        public override string Name => EnumHelper.GetDescription(DeviceType);
 
         public override void SetInitialData(IHSApplication HS, int refId)
         {

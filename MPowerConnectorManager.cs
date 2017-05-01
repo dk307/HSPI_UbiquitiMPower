@@ -21,7 +21,7 @@ namespace Hspi.Connector
             this.HS = HS;
             this.logger = logger;
             this.Device = device;
-            rootDeviceData = new DeviceRootDeviceManager(device.Id, this.HS, logger);
+            rootDeviceData = new DeviceRootDeviceManager(device.Name, device.Id, this.HS, logger);
 
             combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken, instanceCancellationSource.Token);
             runTask = Task.Factory.StartNew(ManageConnection, Token);

@@ -16,8 +16,9 @@ namespace Hspi.DeviceData
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class DeviceRootDeviceManager
     {
-        public DeviceRootDeviceManager(string rootDeviceId, IHSApplication HS, ILogger logger)
+        public DeviceRootDeviceManager(string deviceName, string rootDeviceId, IHSApplication HS, ILogger logger)
         {
+            this.deviceName = deviceName;
             this.logger = logger;
             this.HS = HS;
             this.rootDeviceId = rootDeviceId;
@@ -114,14 +115,14 @@ namespace Hspi.DeviceData
             if (!parentRefId.HasValue)
             {
                 string parentAddress = deviceIdentifier.RootDeviceAddress;
-                var parentHSDevice = CreateDevice(null, parentAddress, new RootDeviceData());
+                var parentHSDevice = CreateDevice(null, deviceName, parentAddress, new RootDeviceData());
                 parentRefId = parentHSDevice.get_Ref(HS);
             }
 
             string address = deviceIdentifier.Address;
             var childDevice = GetDevice(deviceIdentifier.Port, deviceIdentifier.DeviceType);
-            childDevice.Label = label;
-            var childHSDevice = CreateDevice(parentRefId.Value, address, childDevice);
+            string childDeviceName = Invariant($"{ label ?? Invariant($"{deviceName} Port {deviceIdentifier.Port}")} {childDevice.Name}");
+            var childHSDevice = CreateDevice(parentRefId.Value, childDeviceName, address, childDevice);
             childDevice.RefId = childHSDevice.get_Ref(HS);
             currentChildDevices[address] = childDevice;
         }
@@ -167,17 +168,18 @@ namespace Hspi.DeviceData
         /// Creates the HS device.
         /// </summary>
         /// <param name="optionalParentRefId">The optional parent reference identifier.</param>
+        /// <param name="name">The name of device</param>
         /// <param name="deviceAddress">The device address.</param>
         /// <param name="deviceData">The device data.</param>
         /// <returns>
         /// New Device
         /// </returns>
-        private DeviceClass CreateDevice(int? optionalParentRefId, string deviceAddress, DeviceDataBase deviceData)
+        private DeviceClass CreateDevice(int? optionalParentRefId, string name, string deviceAddress, DeviceDataBase deviceData)
         {
             logger.DebugLog(Invariant($"Creating Device with Address:{deviceAddress}"));
 
             DeviceClass device = null;
-            int refId = HS.NewDeviceRef(deviceData.Name);
+            int refId = HS.NewDeviceRef(name);
             if (refId > 0)
             {
                 device = (DeviceClass)HS.GetDeviceByRef(refId);
@@ -192,7 +194,6 @@ namespace Hspi.DeviceData
                 device.set_Interface(HS, PluginData.PlugInName);
                 device.set_InterfaceInstance(HS, string.Empty);
                 device.set_Last_Change(HS, DateTime.Now);
-                //device.set_Location2(HS, parent != null ? parent.get_Name(HS) : deviceData.Name);
                 device.set_Location(HS, PluginData.PlugInName);
 
                 device.MISC_Set(HS, Enums.dvMISC.SHOW_VALUES);
@@ -243,6 +244,7 @@ namespace Hspi.DeviceData
         }
 
         private readonly string rootDeviceId;
+        private readonly string deviceName;
         private readonly IHSApplication HS;
         private int? parentRefId = null;
         private readonly IDictionary<string, DeviceData> currentChildDevices = new Dictionary<string, DeviceData>();

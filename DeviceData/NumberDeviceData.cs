@@ -36,7 +36,7 @@ namespace Hspi.DeviceData
                     RangeEnd = int.MaxValue,
                     IncludeValues = true,
                     RangeStatusDecimals = 3,
-                    RangeStatusSuffix = PluginConfig.GetUnits(DeviceType),
+                    RangeStatusSuffix = " " + PluginConfig.GetUnits(DeviceType),
                 });
                 return pairs;
             }
