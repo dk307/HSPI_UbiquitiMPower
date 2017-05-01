@@ -208,8 +208,8 @@ namespace Hspi
             {
                 plugInName = Name,
                 link = link,
-                linktext = link,
-                page_title = Invariant($"{Name} Config"),
+                linktext = "Configuration",
+                page_title = Invariant($"{PluginData.PlugInName} Configuration"),
             };
             Callback.RegisterConfigLink(wpd);
             Callback.RegisterLink(wpd);

@@ -392,7 +392,7 @@ namespace Hspi
         private const string SaveErrorDivId = "message_id";
         private const string ImageDivId = "image_id";
         private const string RefreshIntervalId = "RefreshIntervalId";
-        private static readonly string pageName = Invariant($"{PluginData.PlugInName} Config");
+        private static readonly string pageName = Invariant($"{PluginData.PlugInName} Configuration").Replace(' ', '_');
         private readonly IHSApplication HS;
         private readonly PluginConfig pluginConfig;
         private const string DeleteDeviceName = "DeleteDeviceName";
