@@ -7,9 +7,7 @@ namespace Hspi
         [Description("Switch")]
         Output = 1,
 
-        [Description("Power(Watts)")]
         Power,
-
         Current,
         Voltage,
 

@@ -41,14 +41,14 @@ namespace Hspi
                 string ipAddressString = GetValue(IPAddressKey, string.Empty, deviceId);
                 IPAddress.TryParse(ipAddressString, out var deviceIP);
 
-                var enabledTypes = new SortedSet<DeviceType>();
+                var enabledTypes = new Dictionary<DeviceType, double>();
 
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
-                    var enabled = GetValue(item.ToString(), false, deviceId);
-                    if (enabled)
+                    var resolution = GetValue(item.ToString(), 0D, deviceId);
+                    if (resolution != 0)
                     {
-                        enabledTypes.Add((DeviceType)item);
+                        enabledTypes.Add((DeviceType)item, resolution);
                     }
                 }
 
@@ -144,7 +144,14 @@ namespace Hspi
 
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
-                    SetValue(item.ToString(), device.EnabledTypes.Contains((DeviceType)item), device.Id);
+                    if (device.EnabledTypesAndResolution.TryGetValue((DeviceType)item, out var value))
+                    {
+                        SetValue(item.ToString(), value, device.Id);
+                    }
+                    else
+                    {
+                        SetValue(item.ToString(), 0D, device.Id);
+                    }
                 }
 
                 if (device.EnabledPorts.Count > 0)
@@ -232,6 +239,60 @@ namespace Hspi
             {
                 var ConfigChangedCopy = ConfigChanged;
                 ConfigChangedCopy(this, EventArgs.Empty);
+            }
+        }
+
+        public static double GetDefaultResolution(DeviceType deviceType)
+        {
+            switch (deviceType)
+            {
+                case DeviceType.Output:
+                    return 1;
+
+                case DeviceType.Power:
+                    return 0.01;
+
+                case DeviceType.Current:
+                    return 0.01;
+
+                case DeviceType.Voltage:
+                    return 0.1;
+
+                case DeviceType.PowerFactor:
+                    return 0.01;
+
+                case DeviceType.Energy:
+                    return 0.01;
+
+                default:
+                    return 0.01;
+            }
+        }
+
+        public static string GetUnits(DeviceType deviceType)
+        {
+            switch (deviceType)
+            {
+                case DeviceType.Output:
+                    return string.Empty;
+
+                case DeviceType.Power:
+                    return "Watts";
+
+                case DeviceType.Current:
+                    return "Amps";
+
+                case DeviceType.Voltage:
+                    return "Volts";
+
+                case DeviceType.PowerFactor:
+                    return string.Empty;
+
+                case DeviceType.Energy:
+                    return "kw Hours";
+
+                default:
+                    return string.Empty;
             }
         }
 

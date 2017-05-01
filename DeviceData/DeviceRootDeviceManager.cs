@@ -24,24 +24,25 @@ namespace Hspi.DeviceData
             GetCurrentDevices();
         }
 
-        public void ProcessSensorData(SensorData sensorData, ISet<DeviceType> updateTypes)
+        public void ProcessSensorData(SensorData sensorData, IReadOnlyDictionary<DeviceType, double> updateTypesWithResolution)
         {
-            if (updateTypes.Count == 0)
+            if (updateTypesWithResolution.Count == 0)
             {
                 return;
             }
 
-            UpdateSensorValue(updateTypes, sensorData.Label, sensorData.Port, DeviceType.Current, sensorData.Current);
-            UpdateSensorValue(updateTypes, sensorData.Label, sensorData.Port, DeviceType.Energy, sensorData.Energy);
-            UpdateSensorValue(updateTypes, sensorData.Label, sensorData.Port, DeviceType.Output, sensorData.Output);
-            UpdateSensorValue(updateTypes, sensorData.Label, sensorData.Port, DeviceType.Power, sensorData.Power);
-            UpdateSensorValue(updateTypes, sensorData.Label, sensorData.Port, DeviceType.PowerFactor, sensorData.PowerFactor);
-            UpdateSensorValue(updateTypes, sensorData.Label, sensorData.Port, DeviceType.Voltage, sensorData.Voltage);
+            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Current, sensorData.Current);
+            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Energy, sensorData.Energy);
+            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Output, sensorData.Output);
+            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Power, sensorData.Power);
+            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.PowerFactor, sensorData.PowerFactor);
+            UpdateSensorValue(updateTypesWithResolution, sensorData.Label, sensorData.Port, DeviceType.Voltage, sensorData.Voltage);
         }
 
-        private void UpdateSensorValue(ISet<DeviceType> updateTypes, [AllowNull]string label, int port, DeviceType deviceType, double value)
+        private void UpdateSensorValue(IReadOnlyDictionary<DeviceType, double> updateTypes, [AllowNull]string label,
+                                       int port, DeviceType deviceType, double value)
         {
-            if (!updateTypes.Contains(deviceType))
+            if (!updateTypes.TryGetValue(deviceType, out var resolution))
             {
                 return;
             }
@@ -54,7 +55,8 @@ namespace Hspi.DeviceData
                 CreateDevice(label, deviceIdentifier);
             }
 
-            currentChildDevices[address].Update(HS, value);
+            double roundedValue = Math.Round(value / resolution, 0, MidpointRounding.AwayFromZero) * resolution;
+            currentChildDevices[address].Update(HS, roundedValue);
         }
 
         public async Task HandleCommand(DeviceIdentifier deviceIdentifier, CancellationToken token,

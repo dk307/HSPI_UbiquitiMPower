@@ -80,7 +80,6 @@ namespace Hspi.Connector
 
         private async Task ProcessDeviceUpdates()
         {
-            // this function does not need any lock as all data is given to it
             try
             {
                 while (!Token.IsCancellationRequested)
@@ -92,8 +91,12 @@ namespace Hspi.Connector
                         {
                             if (Device.EnabledPorts.Contains(sensorData.Port))
                             {
-                                rootDeviceData.ProcessSensorData(sensorData, Device.EnabledTypes);
+                                rootDeviceData.ProcessSensorData(sensorData, Device.EnabledTypesAndResolution);
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(Invariant($"Failed to update Sensor Data for Port {sensorData.Port} on {Device.DeviceIP} with {ex.Message}"));
                         }
                         finally
                         {

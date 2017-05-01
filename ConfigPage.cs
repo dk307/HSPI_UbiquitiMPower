@@ -3,6 +3,7 @@ using NullGuard;
 using Scheduler;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
@@ -100,7 +101,9 @@ namespace Hspi
                 StringBuilder results = new StringBuilder();
 
                 // Validate
-                if (!IPAddress.TryParse(parts[DeviceIPId], out var ipAddress))
+                IPAddress ipAddress = null;
+                if (string.IsNullOrWhiteSpace(parts[DeviceIPId]) ||
+                    !IPAddress.TryParse(parts[DeviceIPId], out ipAddress))
                 {
                     results.AppendLine("IP Address is not Valid.<br>");
                 }
@@ -116,6 +119,20 @@ namespace Hspi
                     results.AppendLine("User name is not Valid.<br>");
                 }
 
+                foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
+                {
+                    var deviceType = (DeviceType)item;
+                    string description = EnumHelper.GetDescription(deviceType);
+                    if (deviceType == DeviceType.Output) continue;
+
+                    string value = parts[GetResolutionId(deviceType)];
+
+                    if (!double.TryParse(value, out double resolution) || resolution <= 0D)
+                    {
+                        results.AppendLine(Invariant($"{description} does not have valid resolution.<br>"));
+                    }
+                }
+
                 if (results.Length > 0)
                 {
                     this.divToUpdate.Add(SaveErrorDivId, results.ToString());
@@ -128,13 +145,20 @@ namespace Hspi
                         deviceId = name.Replace(' ', '_').Replace('.', '_');
                     }
 
-                    var enabledTypes = new SortedSet<DeviceType>();
+                    var enabledTypes = new Dictionary<DeviceType, double>();
 
                     foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                     {
+                        var deviceType = (DeviceType)item;
+
                         if (parts[NameToId(item.ToString())] == "checked")
                         {
-                            enabledTypes.Add((DeviceType)item);
+                            string value = parts[GetResolutionId(deviceType)];
+
+                            if (double.TryParse(value, out double resolution))
+                            {
+                                enabledTypes.Add((DeviceType)item, resolution);
+                            }
                         }
                     }
 
@@ -147,7 +171,9 @@ namespace Hspi
                         }
                     }
 
-                    var device = new MPowerDevice(deviceId, parts[NameId], ipAddress, parts[UserNameId], parts[PasswordId], enabledTypes, enabledPorts);
+                    var device = new MPowerDevice(deviceId, parts[NameId], ipAddress,
+                                                  parts[UserNameId], parts[PasswordId],
+                                                  new ReadOnlyDictionary<DeviceType, double>(enabledTypes), enabledPorts);
 
                     this.pluginConfig.AddDevice(device);
                     this.pluginConfig.FireConfigChanged();
@@ -203,7 +229,7 @@ namespace Hspi
                 stb.Append(@"<td class='tablecell'>");
                 foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
                 {
-                    if (device.Value.EnabledTypes.Contains((DeviceType)item))
+                    if (device.Value.EnabledTypesAndResolution.ContainsKey((DeviceType)item))
                     {
                         string description = EnumHelper.GetDescription((Enum)item);
                         stb.Append(Invariant($"{description}<br>"));
@@ -234,8 +260,9 @@ namespace Hspi
             string userName = device != null ? device.Username : string.Empty;
             string password = device != null ? device.Password : string.Empty;
             string id = device != null ? device.Id : string.Empty;
-            ISet<DeviceType> enabledTypes = device != null ? device.EnabledTypes : new SortedSet<DeviceType>();
-            ISet<int> enabledPorts = device != null ? device.EnabledPorts : new SortedSet<int>();
+            var enabledTypes = device != null ? device.EnabledTypesAndResolution :
+                                new ReadOnlyDictionary<DeviceType, double>(new Dictionary<DeviceType, double>());
+            var enabledPorts = device != null ? device.EnabledPorts : new SortedSet<int>();
             string buttonLabel = device != null ? "Save" : "Add";
             string header = device != null ? "Edit" : "Add New";
 
@@ -251,22 +278,39 @@ namespace Hspi
             stb.Append(Invariant($"<tr><td class='tablecell'>DeviceIP:</td><td class='tablecell' colspan=2>{HtmlTextBox(DeviceIPId, ip)}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>Username:</td><td class='tablecell' colspan=2>{HtmlTextBox(UserNameId, userName)}</td></tr>"));
             stb.Append(Invariant($"<tr><td class='tablecell'>Password:</td><td class='tablecell' colspan=2>{HtmlTextBox(PasswordId, password, type: "password")}</td></tr>"));
-            stb.Append(@"<tr><td class='tablecell'>Enabled Devices</td><td class='tablecell'>");
+            stb.Append(@"<tr><td class='tablecell'>Enabled Devices</td><td class='tablecell' colspan=2>");
             foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
             {
+                var deviceType = (DeviceType)item;
                 string description = EnumHelper.GetDescription((Enum)item);
-                stb.Append(Invariant($"{FormCheckBox(item.ToString(), description, enabledTypes.Contains((DeviceType)item))}<br>"));
+                stb.Append(FormCheckBox(item.ToString(), description, enabledTypes.ContainsKey(deviceType)));
+                stb.Append("<br>");
             }
 
-            stb.Append(@"</td><td class='tablecell'></td></tr>");
-            stb.Append(@"<tr><td class='tablecell'>Enabled Ports</td><td class='tablecell'>");
+            stb.Append(@"</td></tr>");
+
+            foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
+            {
+                var deviceType = (DeviceType)item;
+                string description = EnumHelper.GetDescription(deviceType);
+                if (deviceType == DeviceType.Output) continue;
+                stb.Append(Invariant($"<tr><td class='tablecell'>{description} Resolution:</td><td class='tablecell' colspan=2>"));
+                stb.Append(HtmlTextBox(GetResolutionId(deviceType),
+                                        enabledTypes.ContainsKey(deviceType) ? enabledTypes[deviceType].ToString(CultureInfo.InvariantCulture) :
+                                                PluginConfig.GetDefaultResolution(deviceType).ToString(CultureInfo.InvariantCulture),
+                                        10));
+                stb.Append("&nbsp;");
+                stb.Append(PluginConfig.GetUnits(deviceType));
+                stb.Append("</ td ></ tr > ");
+            }
+            stb.Append(@"<tr><td class='tablecell'>Enabled Ports</td><td class='tablecell' colspan=2>");
             foreach (var item in Enumerable.Range(1, PortsMax))
             {
                 string itemString = item.ToString(CultureInfo.InvariantCulture);
                 stb.Append(FormCheckBox(itemString, itemString, enabledPorts.Contains(item)));
                 stb.Append("<br>");
             }
-            stb.Append(@"</td><td class='tablecell'></td></tr>");
+            stb.Append(@"</td></tr>");
             stb.Append(Invariant($"<tr><td colspan=3>{HtmlTextBox(DeviceIdId, id, type: "hidden")}<div id='{SaveErrorDivId}' style='color:Red'></div></td><td></td></tr>"));
             stb.Append(Invariant($"<tr><td colspan=3>{FormPageButton(SaveDeviceName, buttonLabel)}"));
 
@@ -330,6 +374,11 @@ namespace Hspi
             };
 
             return b.Build();
+        }
+
+        private static string GetResolutionId(DeviceType deviceType)
+        {
+            return deviceType.ToString() + "Resolution";
         }
 
         private const string UserNameId = "UserNameId";

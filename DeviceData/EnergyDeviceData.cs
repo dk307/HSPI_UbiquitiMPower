@@ -8,11 +8,8 @@ namespace Hspi.DeviceData
         {
         }
 
-        protected override double MinDeltaForUpdate => 0.1D;
         protected override double Denominator => 1000D;
-        protected override int RangeDecimals => 1;
 
         public override int HSDeviceType => (int)DeviceTypeInfo_m.DeviceTypeInfo.eDeviceType_Energy.KWH;
-        protected override string Suffix => " KWH";
     }
 }

@@ -12,9 +12,8 @@ namespace Hspi.DeviceData
 
         public override void Update(IHSApplication HS, double deviceValue)
         {
-            double MinDelta = MinDeltaForUpdate;
             double value = deviceValue / Denominator;
-            if (!lastUpdate.HasValue || Math.Abs(lastUpdate.Value - value) > MinDelta)
+            if (!lastUpdate.HasValue || lastUpdate.Value != value)
             {
                 UpdateDeviceData(HS, RefId, value);
                 lastUpdate = value;
@@ -22,8 +21,6 @@ namespace Hspi.DeviceData
         }
 
         public override bool StatusDevice => true;
-
-        protected virtual double MinDeltaForUpdate => 0.01D;
         protected virtual double Denominator => 1D;
         public override DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI DeviceAPI => DeviceTypeInfo_m.DeviceTypeInfo.eDeviceAPI.Energy;
 
@@ -38,15 +35,13 @@ namespace Hspi.DeviceData
                     RangeStart = int.MinValue,
                     RangeEnd = int.MaxValue,
                     IncludeValues = true,
-                    RangeStatusDecimals = RangeDecimals,
-                    RangeStatusSuffix = Suffix,
+                    RangeStatusDecimals = 3,
+                    RangeStatusSuffix = PluginConfig.GetUnits(DeviceType),
                 });
                 return pairs;
             }
         }
 
-        protected virtual int RangeDecimals => 2;
-        protected virtual string Suffix => string.Empty;
         private double? lastUpdate = null;
     }
 }

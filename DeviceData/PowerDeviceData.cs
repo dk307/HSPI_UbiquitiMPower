@@ -9,6 +9,5 @@ namespace Hspi.DeviceData
         }
 
         public override int HSDeviceType => (int)DeviceTypeInfo_m.DeviceTypeInfo.eDeviceType_Energy.Watts;
-        protected override string Suffix => " Watts";
     }
 }
