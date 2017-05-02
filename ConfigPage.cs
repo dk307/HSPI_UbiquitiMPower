@@ -209,7 +209,7 @@ namespace Hspi
 
             stb.Append(@"<div>");
             stb.Append(@"<table class='full_width_table'");
-            stb.Append("<tr height='5'><td colspane=5></td></tr>");
+            stb.Append("<tr height='5'><td colspan=5></td></tr>");
             stb.Append("<tr><td class='tableheader' colspan=5>Devices</td></tr>");
             stb.Append(@"<tr><td class='tablecolumn'>Name</td>" +
                         "<td class='tablecolumn'>Device IP Address</td>" +
