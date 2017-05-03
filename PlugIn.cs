@@ -255,7 +255,6 @@ namespace Hspi
         private readonly IDictionary<string, MPowerConnectorManager> connectorManager = new Dictionary<string, MPowerConnectorManager>();
         private ConfigPage configPage;
         private PluginConfig pluginConfig;
-        private const int ActionRefreshTANumber = 1;
         private bool disposedValue = false;
     }
 }
