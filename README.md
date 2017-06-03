@@ -1,8 +1,5 @@
 Homeseer Weather Ubiquiti mPower PlugIn
 =====================================
-HomeSeer plugin to get weather data from Weather Underground into HomeSeer.
-
-
 
 Build State
 -----------
