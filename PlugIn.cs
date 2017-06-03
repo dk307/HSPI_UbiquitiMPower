@@ -45,7 +45,7 @@ namespace Hspi
             }
             catch (Exception ex)
             {
-                result = Invariant($"Failed to initialize PlugIn With {ex.Message}");
+                result = Invariant($"Failed to initialize PlugIn With {ExceptionHelper.GetFullMessage(ex)}");
                 LogError(result);
             }
 
@@ -56,6 +56,7 @@ namespace Hspi
         {
             lock (connectorManagerLock)
             {
+                // This returns a new copy every time
                 var currentDevices = pluginConfig.Devices;
 
                 // Update changed or new
@@ -153,7 +154,7 @@ namespace Hspi
                 }
                 catch (Exception ex)
                 {
-                    LogError(Invariant($"Failed With {ex.Message}"));
+                    LogError(Invariant($"Failed With {ExceptionHelper.GetFullMessage(ex)}"));
                 }
             }
         }

@@ -116,6 +116,7 @@
     <Compile Include="DeviceData\SwitchDeviceData.cs" />
     <Compile Include="DeviceData\VoltsDeviceData.cs" />
     <Compile Include="DeviceType.cs" />
+    <Compile Include="ExceptionHelper.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="EnumHelper.cs" />
     <Compile Include="HSPI.cs" />
