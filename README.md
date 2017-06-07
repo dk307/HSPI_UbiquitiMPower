@@ -5,7 +5,7 @@ Overview
 This plugin displays integrates Ubiquiti mPower Devices with Homeseer. It can display device values and can control indiviaul power states.
 The plugin in written in C# and is based on a sample from http://board.homeseer.com/showthread.php?t=178122.
 
-It uses undocumented websockets interface to connect with device directly and get updates from it. Same websocket is used to control it. This is unlikely to change in future as mPower device development has been abondened by parent company. But you can still buy devices.
+It uses undocumented websockets interface to connect with device directly and get updates from it. Same websocket is used to control it. This is unlikely to change in future as mPower device development has been abandoned by parent company. But you can still buy these devices.
 
 Compatibility
 ------------
@@ -13,9 +13,9 @@ Tested on the following platforms:
 * Windows 10
 
 Devices:
-mPower-Pro (8-port) (Ver 2.1.11)
+* mPower-Pro (8-port) (Ver 2.1.11)
 
-Since it is same software it should work with other 2 devices.
+Since it is same software it should work with other 2 mPower devices.
 
 Installation
 -----------
@@ -25,7 +25,7 @@ Place the compiled [executable](https://ci.appveyor.com/project/dk307/hspi-ubiqu
 
 Open Menu Item PlugIns->Ubiquiti mPower->Configuration. You should see page with Add New Button.
 
-Click on Add New and enter device details. You can set resolution to avoid unnecessary updates to HomeSeer are these devices have high resolution for these values.
+Click on Add New and enter device details. You can set resolution to avoid unnecessary updates to HomeSeer as these devices have high resolution for these values.
 
 ![Device Details](/asserts/DeviceDetails.png "Device Details")
  
