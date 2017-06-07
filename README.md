@@ -1,4 +1,4 @@
-Homeseer Weather Ubiquiti mPower PlugIn
+Homeseer Ubiquiti mPower PlugIn
 =====================================
 Overview
 --------
