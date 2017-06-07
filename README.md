@@ -1,5 +1,46 @@
-Homeseer Weather Ubiquiti mPower PlugIn
+﻿Homeseer Weather Ubiquiti mPower PlugIn
 =====================================
+Overview
+--------
+This plugin displays integrates Ubiquiti mPower Devices with Homeseer. It can display device values and can control indiviaul power states.
+The plugin in written in C# and is based on a sample from http://board.homeseer.com/showthread.php?t=178122.
+
+It uses undocumented websockets interface to connect with device directly and get updates from it. Same websocket is used to control it. This is unlikely to change in future as mPower device development has been abondened by parent company. But you can still buy devices.
+
+Compatibility
+------------
+Tested on the following platforms:
+* Windows 10
+
+Devices:
+mPower-Pro (8-port) (Ver 2.1.11)
+
+Since it is same software it should work with other 2 devices.
+
+Installation
+-----------
+Make sure that dotNet 4.6.2 is installed on machine. [Link](https://support.microsoft.com/en-us/help/3151802/the-.net-framework-4.6.2-web-installer-for-windows)
+
+Place the compiled [executable](https://ci.appveyor.com/project/dk307/hspi-wuweather/build/artifacts?branch=master) and [config file](https://ci.appveyor.com/project/dk307/hspi-wuweather/build/artifacts?branch=master) in the HomeSeer installation directory. Restart HomeSeer. HomeSeer will recognize the plugin and will add plugin in disable state to its Plugins. Go to HomeSeer -> PlugIns -> Manage and enable this plugin. Create directory *wuweather* under *HomeSeer installation directory\html\images*. Extract Icons([icons.zip](/asserts/Icons.zip)) to this new directory.
+
+Open Menu Item PlugIns->WU Weather->WU Weather Config. You should see page like this:
+
+![Initial Configuration Page](/asserts/Initial.png "Initial Configuration Setting Page")
+
+Enter API Key and Station Id. API Home link takes to Weather Underground API Home to manage API Key. Find Station shows webpage useful to select Station.
+
+![Station Configured Page](/asserts/Configured.png "Configuration Set Page")
+
+If StationId is correct, the image will show location of the station.
+
+Select Devices to be created from other tabs.
+
+If API Key and Station Id are valid, the devices with correct values will show up.
+
+![Devices](/asserts/Devices.png "Devices")
+
+If API Key is wrong, it would show in Homeseer logs as:
+*Warning:Failed to Fetch Data with Invalid API Key*
 
 Build State
 -----------
