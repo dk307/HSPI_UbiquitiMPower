@@ -21,26 +21,17 @@ Installation
 -----------
 Make sure that dotNet 4.6.2 is installed on machine. [Link](https://support.microsoft.com/en-us/help/3151802/the-.net-framework-4.6.2-web-installer-for-windows)
 
-Place the compiled [executable](https://ci.appveyor.com/project/dk307/hspi-wuweather/build/artifacts?branch=master) and [config file](https://ci.appveyor.com/project/dk307/hspi-wuweather/build/artifacts?branch=master) in the HomeSeer installation directory. Restart HomeSeer. HomeSeer will recognize the plugin and will add plugin in disable state to its Plugins. Go to HomeSeer -> PlugIns -> Manage and enable this plugin. Create directory *wuweather* under *HomeSeer installation directory\html\images*. Extract Icons([icons.zip](/asserts/Icons.zip)) to this new directory.
+Place the compiled [executable](https://ci.appveyor.com/project/dk307/hspi-ubiquitimpower/build/artifacts?branch=master) and [config file](https://ci.appveyor.com/project/dk307/hspi-ubiquitimpower/build/artifacts?branch=master) in the HomeSeer installation directory. Restart HomeSeer. HomeSeer will recognize the plugin and will add plugin in disable state to its Plugins. Go to HomeSeer -> PlugIns -> Manage and enable this plugin. 
 
-Open Menu Item PlugIns->WU Weather->WU Weather Config. You should see page like this:
+Open Menu Item PlugIns->Ubiquiti mPower->Configuration. You should see page with Add New Button.
 
-![Initial Configuration Page](/asserts/Initial.png "Initial Configuration Setting Page")
+Click on Add New and enter device details. You can set resolution to avoid unnecessary updates to HomeSeer are these devices have high resolution for these values.
 
-Enter API Key and Station Id. API Home link takes to Weather Underground API Home to manage API Key. Find Station shows webpage useful to select Station.
+![Device Details](/asserts/DeviceDetails.png "Device Details")
+ 
+Click Add. Devices in Homeseer are only created when value is received from device. If you do not see any devices created, enable Debug Logging and check logs.
 
-![Station Configured Page](/asserts/Configured.png "Configuration Set Page")
-
-If StationId is correct, the image will show location of the station.
-
-Select Devices to be created from other tabs.
-
-If API Key and Station Id are valid, the devices with correct values will show up.
-
-![Devices](/asserts/Devices.png "Devices")
-
-If API Key is wrong, it would show in Homeseer logs as:
-*Warning:Failed to Fetch Data with Invalid API Key*
+![Working Devices](/asserts/WorkingDevices.png "Working Devices")
 
 Build State
 -----------
