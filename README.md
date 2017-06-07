@@ -1,8 +1,8 @@
-﻿Homeseer Weather Ubiquiti mPower PlugIn
+Homeseer Weather Ubiquiti mPower PlugIn
 =====================================
 Overview
 --------
-This plugin displays integrates Ubiquiti mPower Devices with Homeseer. It can display device values and can control indiviaul power states.
+This plugin displays integrates Ubiquiti mPower Devices with Homeseer. It can display device values and can control individual power states of ports.
 The plugin in written in C# and is based on a sample from http://board.homeseer.com/showthread.php?t=178122.
 
 It uses undocumented websockets interface to connect with device directly and get updates from it. Same websocket is used to control it. This is unlikely to change in future as mPower device development has been abandoned by parent company. But you can still buy these devices.
