@@ -56,7 +56,7 @@ namespace Hspi.Connector
                 throw new Exception("Connection is already closed/opened");
             }
 
-            logger.DebugLog(Invariant($"Logging to {DeviceIP} with {sessionId}"));
+            logger.LogDebug(Invariant($"Logging to {DeviceIP} with {sessionId}"));
 
             var postUrl = new Uri($"http://{DeviceIP}/login.cgi");
             string formDataString = $"username={WebUtility.UrlEncode(userName)}&password={WebUtility.UrlEncode(password)}";
@@ -92,7 +92,7 @@ namespace Hspi.Connector
             webSocket.Error += WebSocket_Error;
             webSocket.Closed += WebSocket_Closed;
             webSocket.Open();
-            logger.DebugLog(Invariant($"Created WebSocket to {DeviceIP}"));
+            logger.LogDebug(Invariant($"Created WebSocket to {DeviceIP}"));
         }
 
         public IDictionary<int, SensorData> GetSensorData(IEnumerable<int> filter = null)
@@ -122,7 +122,7 @@ namespace Hspi.Connector
 
         public async Task UpdateOutputDirectly(int port, bool newState, CancellationToken token)
         {
-            logger.DebugLog(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
+            logger.LogDebug(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
 
             var putUrl = new Uri($"http://{DeviceIP}/sensors/{port}");
             string formDataString = Invariant($"output={(newState ? 1 : 0)}");
@@ -136,7 +136,7 @@ namespace Hspi.Connector
                 string error = Invariant($"Failed to update Port:{port} with {data.Status ?? string.Empty}");
                 throw new HspiException(error);
             }
-            logger.DebugLog(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
+            logger.LogDebug(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
         }
 
         public async Task UpdateOutput(int port, bool newState, CancellationToken token)
@@ -144,11 +144,11 @@ namespace Hspi.Connector
             var webSocketCopy = webSocket;
             if (webSocketCopy.State == WebSocketState.Open)
             {
-                logger.DebugLog(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
+                logger.LogDebug(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
                 string jsonString = Invariant($"{{\"sensors\": [ {{ \"port\":{port},  \"output\":{(newState ? 1 : 0)} }}] }}");
                 webSocketCopy.Send(jsonString); // it is send async so we don't know what happens
 
-                logger.DebugLog(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
+                logger.LogDebug(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
             }
             else
             {
@@ -183,7 +183,7 @@ namespace Hspi.Connector
 
         public async Task LogOut(CancellationToken token)
         {
-            logger.DebugLog(Invariant($"Logging out for {DeviceIP} with {sessionId ?? string.Empty}"));
+            logger.LogDebug(Invariant($"Logging out for {DeviceIP} with {sessionId ?? string.Empty}"));
             DisposeWebSocket();
 
             var logoutUri = new Uri($"http://{DeviceIP}/logout.cgi");
@@ -254,7 +254,7 @@ namespace Hspi.Connector
 
         private void WebSocket_Closed(object sender, EventArgs e)
         {
-            logger.DebugLog(Invariant($"WebSocket Closed out for {DeviceIP} with {sessionId ?? string.Empty}"));
+            logger.LogDebug(Invariant($"WebSocket Closed out for {DeviceIP} with {sessionId ?? string.Empty}"));
             cancelationTokenSourceForCompleted.Cancel();
         }
 

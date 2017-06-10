@@ -1,5 +1,6 @@
 ﻿using Scheduler.Classes;
 using System;
+using System.Globalization;
 
 namespace Hspi.DeviceData
 {
@@ -29,7 +30,7 @@ namespace Hspi.DeviceData
                 return null;
             }
 
-            if (!int.TryParse(parts[2], out int port))
+            if (!int.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out int port))
             {
                 return null;
             }

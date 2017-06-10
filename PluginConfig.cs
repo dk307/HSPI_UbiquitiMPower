@@ -54,7 +54,7 @@ namespace Hspi
                 var enabledPorts = new SortedSet<int>();
                 foreach (var portString in enabledPortsString.Split(PortsEnabledSeparator))
                 {
-                    if (int.TryParse(portString, out var port))
+                    if (int.TryParse(portString, NumberStyles.Any, CultureInfo.InvariantCulture, out var port))
                     {
                         enabledPorts.Add(port);
                     }

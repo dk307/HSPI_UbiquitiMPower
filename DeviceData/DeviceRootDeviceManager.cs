@@ -184,7 +184,7 @@ namespace Hspi.DeviceData
         /// </returns>
         private DeviceClass CreateDevice(int? optionalParentRefId, string name, string deviceAddress, DeviceDataBase deviceData)
         {
-            logger.DebugLog(Invariant($"Creating Device with Address:{deviceAddress}"));
+            logger.LogDebug(Invariant($"Creating Device with Address:{deviceAddress}"));
 
             DeviceClass device = null;
             int refId = HS.NewDeviceRef(name);

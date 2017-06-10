@@ -127,7 +127,7 @@ namespace Hspi
 
                     string value = parts[GetResolutionId(deviceType)];
 
-                    if (!double.TryParse(value, out double resolution) || resolution <= 0D)
+                    if (!double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double resolution) || resolution <= 0D)
                     {
                         results.AppendLine(Invariant($"{description} does not have valid resolution.<br>"));
                     }
@@ -159,7 +159,7 @@ namespace Hspi
 
                         string value = parts[GetResolutionId(deviceType)];
 
-                        if (double.TryParse(value, out double resolutionValue))
+                        if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double resolutionValue))
                         {
                             resolution.Add(deviceType, resolutionValue);
                         }

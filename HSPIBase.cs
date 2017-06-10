@@ -267,28 +267,24 @@ namespace Hspi
 
         protected override int GetTriggerCount() => 0;
 
-        public virtual void DebugLog(string message)
+        public virtual void LogDebug(string message)
         {
-            Trace.WriteLine(message);
             HS.WriteLog(Name, Invariant($"Debug:{message}"));
         }
 
         public void LogError(string message)
         {
-            Trace.TraceError(message);
-            HS.WriteLog(Name, Invariant($"Error:{message}"));
+            HS.WriteLogEx(Name, Invariant($"Error:{message}"), "#FF0000");
         }
 
         public void LogInfo(string message)
         {
-            Trace.TraceInformation(message);
             HS.WriteLog(Name, message);
         }
 
         public void LogWarning(string message)
         {
-            Trace.TraceWarning(message);
-            HS.WriteLog(Name, Invariant($"Warning:{message}"));
+            HS.WriteLogEx(Name, Invariant($"Warning:{message}"), "#D58000");
         }
 
         private readonly int accessLevel;

@@ -41,7 +41,7 @@ namespace Hspi
 
                 RestartMPowerConnections();
 
-                DebugLog("Plugin Started");
+                LogInfo("Plugin Started");
             }
             catch (Exception ex)
             {
@@ -101,11 +101,11 @@ namespace Hspi
             RestartMPowerConnections();
         }
 
-        public override void DebugLog(string message)
+        public override void LogDebug(string message)
         {
             if (pluginConfig.DebugLogging)
             {
-                base.DebugLog(message);
+                base.LogDebug(message);
             }
         }
 
