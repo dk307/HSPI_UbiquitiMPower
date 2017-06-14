@@ -91,7 +91,7 @@ namespace Hspi
                 configLock.EnterReadLock();
                 try
                 {
-                    return new ReadOnlyDictionary<string, MPowerDevice>(devices);
+                    return new Dictionary<string, MPowerDevice>(devices);
                 }
                 finally
                 {
