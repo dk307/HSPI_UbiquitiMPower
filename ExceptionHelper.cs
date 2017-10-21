@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Text;
-using Hspi.Exceptions;
 
 namespace Hspi
 {
-    using static System.FormattableString;
-
     internal static class ExceptionHelper
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals")]

@@ -13,7 +13,7 @@ namespace Hspi
     using static System.FormattableString;
 
     /// <summary>
-    /// Plugin class for Weather Underground
+    /// Plugin class for Ubiquiti mPower
     /// </summary>
     /// <seealso cref="Hspi.HspiBase" />
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]

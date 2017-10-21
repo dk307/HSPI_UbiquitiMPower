@@ -160,7 +160,7 @@ namespace Hspi.Connector
         {
             var postUrl = new Uri($"http://{DeviceIP}/sensors");
             HttpWebRequest request = CreateWebRequest(postUrl, "GET");
-            string initialData = await ProcessRequest(request, token);
+            string initialData = await ProcessRequest(request, token).ConfigureAwait(false);
             var sensorsData = DeserializeJson<InitialData>(initialData);
             this.sensorDataMapLock.EnterWriteLock();
             try
