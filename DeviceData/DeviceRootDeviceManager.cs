@@ -1,4 +1,4 @@
-﻿using HomeSeerAPI;
+using HomeSeerAPI;
 using Hspi.Connector;
 using Hspi.Connector.Model;
 using Hspi.Exceptions;
@@ -11,15 +11,15 @@ using System.Threading.Tasks;
 
 namespace Hspi.DeviceData
 {
+    using System.Diagnostics;
     using static System.FormattableString;
 
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class DeviceRootDeviceManager
     {
-        public DeviceRootDeviceManager(string deviceName, string rootDeviceId, IHSApplication HS, ILogger logger)
+        public DeviceRootDeviceManager(string deviceName, string rootDeviceId, IHSApplication HS)
         {
             this.deviceName = deviceName;
-            this.logger = logger;
             this.HS = HS;
             this.rootDeviceId = rootDeviceId;
             GetCurrentDevices();
@@ -184,7 +184,7 @@ namespace Hspi.DeviceData
         /// </returns>
         private DeviceClass CreateDevice(int? optionalParentRefId, string name, string deviceAddress, DeviceDataBase deviceData)
         {
-            logger.LogDebug(Invariant($"Creating Device with Address:{deviceAddress}"));
+            Trace.TraceInformation(Invariant($"Creating Device with Address:{deviceAddress}"));
 
             DeviceClass device = null;
             int refId = HS.NewDeviceRef(name);
@@ -256,6 +256,5 @@ namespace Hspi.DeviceData
         private readonly IHSApplication HS;
         private int? parentRefId = null;
         private readonly IDictionary<string, DeviceData> currentChildDevices = new Dictionary<string, DeviceData>();
-        private readonly ILogger logger;
     };
 }

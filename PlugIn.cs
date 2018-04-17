@@ -1,4 +1,4 @@
-﻿using HomeSeerAPI;
+using HomeSeerAPI;
 using Hspi.Connector;
 using Hspi.DeviceData;
 using Hspi.Exceptions;
@@ -68,12 +68,12 @@ namespace Hspi
                         {
                             oldConnector.Cancel();
                             oldConnector.Dispose();
-                            connectorManager[device.Key] = new MPowerConnectorManager(HS, device.Value, this as ILogger, ShutdownCancellationToken);
+                            connectorManager[device.Key] = new MPowerConnectorManager(HS, device.Value, ShutdownCancellationToken);
                         }
                     }
                     else
                     {
-                        connectorManager.Add(device.Key, new MPowerConnectorManager(HS, device.Value, this as ILogger, ShutdownCancellationToken));
+                        connectorManager.Add(device.Key, new MPowerConnectorManager(HS, device.Value, ShutdownCancellationToken));
                     }
                 }
 

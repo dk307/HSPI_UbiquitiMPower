@@ -102,7 +102,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigPage.cs" />
-    <Compile Include="Connector\ILogger.cs" />
     <Compile Include="Connector\Model\InitialData.cs" />
     <Compile Include="Connector\Model\PutResult.cs" />
     <Compile Include="Connector\Model\SensorData.cs" />
@@ -124,6 +123,8 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="EnumHelper.cs" />
     <Compile Include="HSPI.cs" />
+    <Compile Include="HSTraceListener.cs" />
+    <Compile Include="ILogger.cs" />
     <Compile Include="MPowerConnectorManager.cs" />
     <Compile Include="MPowerDevice.cs" />
     <Compile Include="PlugIn.cs" />

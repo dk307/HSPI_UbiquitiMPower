@@ -1,4 +1,4 @@
-﻿using HomeSeerAPI;
+using HomeSeerAPI;
 using Hspi.Connector.Model;
 using Hspi.DeviceData;
 using Hspi.Exceptions;
@@ -11,17 +11,17 @@ using System.Threading.Tasks;
 
 namespace Hspi.Connector
 {
+    using System.Diagnostics;
     using static System.FormattableString;
 
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class MPowerConnectorManager : IDisposable
     {
-        public MPowerConnectorManager(IHSApplication HS, MPowerDevice device, ILogger logger, CancellationToken shutdownToken)
+        public MPowerConnectorManager(IHSApplication HS, MPowerDevice device, CancellationToken shutdownToken)
         {
             this.HS = HS;
-            this.logger = logger;
             this.Device = device;
-            rootDeviceData = new DeviceRootDeviceManager(device.Name, device.Id, this.HS, logger);
+            rootDeviceData = new DeviceRootDeviceManager(device.Name, device.Id, this.HS);
 
             combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken, instanceCancellationSource.Token);
             runTask = Task.Factory.StartNew(ManageConnection, Token);
@@ -96,7 +96,7 @@ namespace Hspi.Connector
                         }
                         catch (Exception ex)
                         {
-                            logger.LogWarning(Invariant($"Failed to update Sensor Data for Port {sensorData.Port} on {Device.DeviceIP} with {ex.Message}"));
+                            Trace.TraceWarning(Invariant($"Failed to update Sensor Data for Port {sensorData.Port} on {Device.DeviceIP} with {ex.Message}"));
                         }
                         finally
                         {
@@ -127,7 +127,7 @@ namespace Hspi.Connector
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(Invariant($"Failed to Get Full Sensor Data from {Device.DeviceIP} with {ex.Message}"));
+                        Trace.TraceWarning(Invariant($"Failed to Get Full Sensor Data from {Device.DeviceIP} with {ex.Message}"));
                         await DestroyConnection();
                     }
                 }
@@ -143,14 +143,14 @@ namespace Hspi.Connector
 
             if (!connector.Connected)
             {
-                logger.LogWarning(Invariant($"WebSocket Disconnected to {Device.DeviceIP}. Total Errors:{connector.TotalErrors}. Reconnecting..."));
+                Trace.TraceWarning(Invariant($"WebSocket Disconnected to {Device.DeviceIP}. Total Errors:{connector.TotalErrors}. Reconnecting..."));
                 return true;
             }
 
             int maxErrors = 10;
             if (connector.TotalErrors > maxErrors)
             {
-                logger.LogWarning(Invariant($"Too many errors in websocket connection to {Device.DeviceIP}. Total Errors:{connector.TotalErrors}. Reconnecting..."));
+                Trace.TraceWarning(Invariant($"Too many errors in websocket connection to {Device.DeviceIP}. Total Errors:{connector.TotalErrors}. Reconnecting..."));
                 return true;
             }
 
@@ -158,7 +158,7 @@ namespace Hspi.Connector
             TimeSpan lastUpdate = connector.TimeSinceLastUpdate;
             if (lastUpdate > maxUpdateTime)
             {
-                logger.LogWarning(Invariant($"Did not receive update from {Device.DeviceIP} for {lastUpdate.Seconds} seconds. Reconnecting..."));
+                Trace.TraceWarning(Invariant($"Did not receive update from {Device.DeviceIP} for {lastUpdate.Seconds} seconds. Reconnecting..."));
                 return true;
             }
 
@@ -210,7 +210,7 @@ namespace Hspi.Connector
                 MPowerConnector newConnector = null;
                 try
                 {
-                    newConnector = new MPowerConnector(Device.DeviceIP, logger);
+                    newConnector = new MPowerConnector(Device.DeviceIP);
                     newConnector.PortsChanged += Connector_PortsChanged;
 
                     await newConnector.Connect(Device.Username, Device.Password, Token).ConfigureAwait(false);
@@ -218,7 +218,7 @@ namespace Hspi.Connector
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(Invariant($"Failed to Connect to {Device.DeviceIP} with {ex.Message}"));
+                    Trace.TraceWarning(Invariant($"Failed to Connect to {Device.DeviceIP} with {ex.Message}"));
                     newConnector?.Dispose();
                 }
             }
@@ -276,7 +276,6 @@ namespace Hspi.Connector
         private volatile MPowerConnector connector;
         private readonly CancellationTokenSource combinedCancellationSource;
         private readonly CancellationTokenSource instanceCancellationSource = new CancellationTokenSource();
-        private readonly ILogger logger;
         private readonly IHSApplication HS;
         private readonly BlockingCollection<SensorData> changedPorts = new BlockingCollection<SensorData>();
         private readonly DeviceRootDeviceManager rootDeviceData;

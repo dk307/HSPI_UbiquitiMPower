@@ -1,4 +1,4 @@
-﻿using Hspi.Connector.Model;
+using Hspi.Connector.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -42,9 +42,8 @@ namespace Hspi.Connector
 
         public CancellationToken ConnectionClosed => cancelationTokenSourceForCompleted.Token;
 
-        public MPowerConnector(IPAddress deviceIP, ILogger logger)
+        public MPowerConnector(IPAddress deviceIP)
         {
-            this.logger = logger;
             DeviceIP = deviceIP;
             sessionId = GenerateSessionId();
         }
@@ -56,7 +55,7 @@ namespace Hspi.Connector
                 throw new Exception("Connection is already closed/opened");
             }
 
-            logger.LogDebug(Invariant($"Logging to {DeviceIP} with {sessionId}"));
+            Trace.WriteLine(Invariant($"Logging to {DeviceIP} with {sessionId}"));
 
             var postUrl = new Uri($"http://{DeviceIP}/login.cgi");
             string formDataString = $"username={WebUtility.UrlEncode(userName)}&password={WebUtility.UrlEncode(password)}";
@@ -74,7 +73,7 @@ namespace Hspi.Connector
                 throw new Exception(errorMessage);
             }
 
-            logger.LogInfo(Invariant($"Logged to {DeviceIP} with {sessionId}"));
+            Trace.TraceInformation(Invariant($"Logged to {DeviceIP} with {sessionId}"));
             await UpdateAllSensorData(token);
 
             List<SensorData> changed = new List<SensorData>();
@@ -92,7 +91,7 @@ namespace Hspi.Connector
             webSocket.Error += WebSocket_Error;
             webSocket.Closed += WebSocket_Closed;
             webSocket.Open();
-            logger.LogDebug(Invariant($"Created WebSocket to {DeviceIP}"));
+            Trace.WriteLine(Invariant($"Created WebSocket to {DeviceIP}"));
         }
 
         public IDictionary<int, SensorData> GetSensorData(IEnumerable<int> filter = null)
@@ -122,7 +121,7 @@ namespace Hspi.Connector
 
         public async Task UpdateOutputDirectly(int port, bool newState, CancellationToken token)
         {
-            logger.LogDebug(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
+            Trace.WriteLine(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
 
             var putUrl = new Uri($"http://{DeviceIP}/sensors/{port}");
             string formDataString = Invariant($"output={(newState ? 1 : 0)}");
@@ -136,7 +135,7 @@ namespace Hspi.Connector
                 string error = Invariant($"Failed to update Port:{port} with {data.Status ?? string.Empty}");
                 throw new HspiException(error);
             }
-            logger.LogDebug(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
+            Trace.WriteLine(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
         }
 
         public async Task UpdateOutput(int port, bool newState, CancellationToken token)
@@ -144,11 +143,11 @@ namespace Hspi.Connector
             var webSocketCopy = webSocket;
             if (webSocketCopy.State == WebSocketState.Open)
             {
-                logger.LogDebug(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
+                Trace.WriteLine(Invariant($"Updating Port {port} on {DeviceIP} state to {newState}"));
                 string jsonString = Invariant($"{{\"sensors\": [ {{ \"port\":{port},  \"output\":{(newState ? 1 : 0)} }}] }}");
                 webSocketCopy.Send(jsonString); // it is send async so we don't know what happens
 
-                logger.LogDebug(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
+                Trace.WriteLine(Invariant($"Updated Port {port} on {DeviceIP} state to {newState}"));
             }
             else
             {
@@ -183,13 +182,13 @@ namespace Hspi.Connector
 
         public async Task LogOut(CancellationToken token)
         {
-            logger.LogDebug(Invariant($"Logging out for {DeviceIP} with {sessionId ?? string.Empty}"));
+            Trace.WriteLine(Invariant($"Logging out for {DeviceIP} with {sessionId ?? string.Empty}"));
             DisposeWebSocket();
 
             var logoutUri = new Uri($"http://{DeviceIP}/logout.cgi");
             HttpWebRequest request = CreateWebRequest(logoutUri, "GET");
             await ProcessRequest(request, token);
-            logger.LogInfo(Invariant($"Logged out for {DeviceIP} with {sessionId ?? string.Empty}"));
+            Trace.TraceInformation(Invariant($"Logged out for {DeviceIP} with {sessionId ?? string.Empty}"));
         }
 
         private void DisposeWebSocket()
@@ -254,13 +253,13 @@ namespace Hspi.Connector
 
         private void WebSocket_Closed(object sender, EventArgs e)
         {
-            logger.LogDebug(Invariant($"WebSocket Closed out for {DeviceIP} with {sessionId ?? string.Empty}"));
+            Trace.WriteLine(Invariant($"WebSocket Closed out for {DeviceIP} with {sessionId ?? string.Empty}"));
             cancelationTokenSourceForCompleted.Cancel();
         }
 
         private void WebSocket_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
-            logger.LogWarning(Invariant($"WebSocket Errored out for {DeviceIP} with {sessionId ?? string.Empty} with  {e.Exception.Message}"));
+            Trace.TraceWarning(Invariant($"WebSocket Errored out for {DeviceIP} with {sessionId ?? string.Empty} with  {e.Exception.Message}"));
             cancelationTokenSourceForCompleted.Cancel();
         }
 
@@ -278,7 +277,7 @@ namespace Hspi.Connector
             catch (Exception ex)
             {
                 Interlocked.Increment(ref totalErrors);
-                logger.LogWarning(Invariant($"Failed to process Websocket data with {ex.Message}"));
+                Trace.TraceWarning(Invariant($"Failed to process Websocket data with {ex.Message}"));
             }
         }
 
@@ -346,7 +345,6 @@ namespace Hspi.Connector
         private WebSocket webSocket;
         private readonly ReaderWriterLockSlim sensorDataMapLock = new ReaderWriterLockSlim();
         private readonly IDictionary<int, SensorData> sensorDataMap = new Dictionary<int, SensorData>();
-        private readonly ILogger logger;
         private CancellationTokenSource cancelationTokenSourceForCompleted = new CancellationTokenSource();
         private long totalErrors = 0;
         private Stopwatch lastMessage = new Stopwatch();

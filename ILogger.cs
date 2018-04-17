@@ -1,4 +1,4 @@
-﻿namespace Hspi.Connector
+﻿namespace Hspi
 {
     public interface ILogger
     {
