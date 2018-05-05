@@ -1,12 +1,14 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Weavers>
   <Costura>
     <ExcludeAssemblies>
       Scheduler
-      HomeseerAPI
+      HomeSeerAPI
       HSCF
       ADODB
       Interop.hsrecord2
+      NullGuard
+      Costura
     </ExcludeAssemblies>
   </Costura>
   <NullGuard />
