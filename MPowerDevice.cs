@@ -1,4 +1,4 @@
-﻿using NullGuard;
+using NullGuard;
 using System;
 using System.Collections.Generic;
 using System.Linq;
