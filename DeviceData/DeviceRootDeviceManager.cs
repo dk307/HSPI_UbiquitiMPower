@@ -210,13 +210,13 @@ namespace Hspi.DeviceData
                     device.MISC_Set(HS, Enums.dvMISC.STATUS_ONLY);
                     device.MISC_Clear(HS, Enums.dvMISC.AUTO_VOICE_COMMAND);
                     device.MISC_Clear(HS, Enums.dvMISC.SET_DOES_NOT_CHANGE_LAST_CHANGE);
-                    device.set_Status_Support(HS, false);
+                    device.set_Status_Support(HS, true);
                 }
                 else
                 {
                     device.MISC_Set(HS, Enums.dvMISC.SET_DOES_NOT_CHANGE_LAST_CHANGE);
                     device.MISC_Set(HS, Enums.dvMISC.AUTO_VOICE_COMMAND);
-                    device.set_Status_Support(HS, true);
+                    device.set_Status_Support(HS, false);
                 }
 
                 var pairs = deviceData.StatusPairs;

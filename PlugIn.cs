@@ -171,23 +171,27 @@ namespace Hspi
                 DeviceClass deviceClass = (DeviceClass)HS.GetDeviceByRef(deviceId);
                 var deviceIdentifier = DeviceIdentifier.Identify(deviceClass);
 
-                foreach (var device in pluginConfig.Devices)
+                if (deviceIdentifier != null)
                 {
-                    if (device.Key == deviceIdentifier.DeviceId)
+
+                    foreach (var device in pluginConfig.Devices)
                     {
-                        StringBuilder stb = new StringBuilder();
+                        if (device.Key == deviceIdentifier.DeviceId)
+                        {
+                            StringBuilder stb = new StringBuilder();
 
-                        stb.Append(@"<table style='width:100%;border-spacing:0px;'");
-                        stb.Append("<tr height='5'><td style='width:25%'></td><td style='width:20%'></td><td style='width:55%'></td></tr>");
-                        stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{device.Value.Name}</td></tr>"));
-                        stb.Append(Invariant($"<tr><td class='tablecell'>Device IP:</td><td class='tablecell' colspan=2>{device.Value.DeviceIP}</td></tr>"));
-                        stb.Append(Invariant($"<tr><td class='tablecell'>Port:</td><td class='tablecell' colspan=2>{deviceIdentifier.Port}</td></tr>"));
-                        stb.Append(Invariant($"<tr><td class='tablecell'>Type:</td><td class='tablecell' colspan=2>{EnumHelper.GetDescription(deviceIdentifier.DeviceType)}</td></tr>"));
-                        stb.Append(Invariant($"</td><td></td></tr>"));
-                        stb.Append("<tr height='5'><td colspan=3></td></tr>");
-                        stb.Append(@" </table>");
+                            stb.Append(@"<table style='width:100%;border-spacing:0px;'");
+                            stb.Append("<tr height='5'><td style='width:25%'></td><td style='width:20%'></td><td style='width:55%'></td></tr>");
+                            stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{device.Value.Name}</td></tr>"));
+                            stb.Append(Invariant($"<tr><td class='tablecell'>Device IP:</td><td class='tablecell' colspan=2>{device.Value.DeviceIP}</td></tr>"));
+                            stb.Append(Invariant($"<tr><td class='tablecell'>Port:</td><td class='tablecell' colspan=2>{deviceIdentifier.Port}</td></tr>"));
+                            stb.Append(Invariant($"<tr><td class='tablecell'>Type:</td><td class='tablecell' colspan=2>{EnumHelper.GetDescription(deviceIdentifier.DeviceType)}</td></tr>"));
+                            stb.Append(Invariant($"</td><td></td></tr>"));
+                            stb.Append("<tr height='5'><td colspan=3></td></tr>");
+                            stb.Append(@" </table>");
 
-                        return stb.ToString();
+                            return stb.ToString();
+                        }
                     }
                 }
 
