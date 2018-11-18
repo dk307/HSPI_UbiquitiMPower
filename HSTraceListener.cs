@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -22,7 +22,6 @@ namespace Hspi
         }
 
         public override bool IsThreadSafe => true;
-
 
         public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
         {
@@ -49,15 +48,19 @@ namespace Hspi
                     case TraceEventType.Error:
                         logger.LogError(message);
                         break;
+
                     case TraceEventType.Warning:
-                        Trace.TraceWarning(message);
+                        logger.LogWarning(message);
                         break;
+
                     case TraceEventType.Information:
                         logger.LogInfo(message);
                         break;
+
                     case TraceEventType.Verbose:
                         logger.LogDebug(message);
                         break;
+
                     case TraceEventType.Start:
                     case TraceEventType.Stop:
                     case TraceEventType.Suspend:

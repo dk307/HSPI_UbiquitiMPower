@@ -1,4 +1,4 @@
-﻿using HomeSeerAPI;
+using HomeSeerAPI;
 using System.Collections.Generic;
 
 namespace Hspi.DeviceData
@@ -84,7 +84,7 @@ namespace Hspi.DeviceData
 
         public override Task HandleCommand(MPowerConnector connector, CancellationToken token, double value, ePairControlUse control)
         {
-            bool output = false;
+            bool? output = null;
             if (control == ePairControlUse._Off)
             {
                 output = false;
@@ -102,7 +102,14 @@ namespace Hspi.DeviceData
                 output = true;
             }
 
-            return connector.UpdateOutput(Port, output, token);
+            if (output.HasValue)
+            {
+                return connector.UpdateOutput(Port, output.Value, token);
+            }
+            else
+            {
+                return Task.CompletedTask;
+            }
         }
 
         private bool? lastValue = null;

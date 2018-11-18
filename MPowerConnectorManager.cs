@@ -25,7 +25,10 @@ namespace Hspi.Connector
 
             combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken, instanceCancellationSource.Token);
             runTask = Task.Factory.StartNew(ManageConnection, Token);
-            processTask = Task.Factory.StartNew(ProcessDeviceUpdates, Token, TaskCreationOptions.LongRunning, TaskScheduler.Current);
+            processTask = Task.Factory.StartNew(ProcessDeviceUpdates,
+                                                Token,
+                                                TaskCreationOptions.LongRunning,
+                                                TaskScheduler.Current);
         }
 
         public void Cancel()
@@ -219,6 +222,8 @@ namespace Hspi.Connector
                 catch (Exception ex)
                 {
                     Trace.TraceWarning(Invariant($"Failed to Connect to {Device.DeviceIP} with {ex.Message}"));
+                    newConnector.PortsChanged -= Connector_PortsChanged;
+
                     newConnector?.Dispose();
                 }
             }
@@ -226,15 +231,18 @@ namespace Hspi.Connector
 
         private void Connector_PortsChanged(object sender, IList<SensorData> portsChanged)
         {
-            try
+            if (sender == connector)
             {
-                foreach (var data in portsChanged)
+                try
                 {
-                    changedPorts.Add(data, Token);
+                    foreach (var data in portsChanged)
+                    {
+                        changedPorts.Add(data, Token);
+                    }
                 }
-            }
-            catch (OperationCanceledException)
-            {
+                catch (OperationCanceledException)
+                {
+                }
             }
         }
 
