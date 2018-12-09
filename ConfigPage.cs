@@ -38,6 +38,15 @@ namespace Hspi
         /// </summary>
         public static string Name => pageName;
 
+        public static string HtmlEncode<T>([AllowNull]T value)
+        {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+            return HttpUtility.HtmlEncode(value);
+        }
+
         /// <summary>
         /// Get the web page string for the configuration page.
         /// </summary>
@@ -202,61 +211,56 @@ namespace Hspi
             return base.postBackProc(Name, data, user, userRights);
         }
 
-        private const string EditDevicePageType = "addNew";
-
-        private string BuildMainWebPageBody()
+        protected static string HtmlTextBox(string name, string defaultText, int size = 25, string type = "text", bool @readonly = false)
         {
-            StringBuilder stb = new StringBuilder();
+            return Invariant($"<input type=\'{type}\' id=\'{NameToIdWithPrefix(name)}\' size=\'{size}\' name=\'{name}\' value=\'{HtmlEncode(defaultText)}\' {(@readonly ? "readonly" : string.Empty)}>");
+        }
 
-            stb.Append(@"<div>");
-            stb.Append(@"<table class='full_width_table'>");
-            stb.Append("<tr height='5'><td colspan=5></td></tr>");
-            stb.Append("<tr><td class='tableheader' colspan=5>Devices</td></tr>");
-            stb.Append(@"<tr><td class='tablecolumn'>Name</td>" +
-                        "<td class='tablecolumn'>Device IP Address</td>" +
-                        "<td class='tablecolumn'>Enabled Devices</td>" +
-                        "<td class='tablecolumn'>Enabled Ports</td>" +
-                        "<td class='tablecolumn'></td></tr>");
-
-            foreach (var device in pluginConfig.Devices)
+        protected string FormCheckBox(string name, string label, bool @checked, bool autoPostBack = false)
+        {
+            var cb = new clsJQuery.jqCheckBox(name, label, PageName, true, true)
             {
-                stb.Append(@"<tr>");
-                stb.Append(Invariant($"<td class='tablecell'>{device.Value.Name}</td>"));
-                stb.Append(Invariant($"<td class='tablecell'>{device.Value.DeviceIP}</td>"));
-                stb.Append(@"<td class='tablecell'>");
-                foreach (var item in device.Value.EnabledPorts)
-                {
-                    stb.Append(Invariant($"{item}<br>"));
-                }
+                id = NameToIdWithPrefix(name),
+                @checked = @checked,
+                autoPostBack = autoPostBack,
+            };
+            return cb.Build();
+        }
 
-                stb.Append("</td>");
-                stb.Append(@"<td class='tablecell'>");
-                foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
-                {
-                    if (device.Value.EnabledTypes.Contains((DeviceType)item))
-                    {
-                        string description = EnumHelper.GetDescription((Enum)item);
-                        stb.Append(Invariant($"{description}<br>"));
-                    }
-                }
+        protected string FormPageButton(string name, string label)
+        {
+            var b = new clsJQuery.jqButton(name, label, PageName, true)
+            {
+                id = NameToIdWithPrefix(name),
+            };
 
-                stb.Append("</td>");
-                stb.Append(Invariant($"<td class='tablecell'>{PageTypeButton(Invariant($"Edit{device.Key}"), "Edit", EditDevicePageType, deviceId: device.Key)}</td></tr>"));
-            }
-            stb.Append(Invariant($"<tr><td colspan=5>{PageTypeButton("Add New Device", AddNewName, EditDevicePageType)}</td><td></td></tr>"));
-            stb.Append("<tr height='5'><td colspan=5></td></tr>");
-            stb.Append(Invariant($"<tr><td colspan=5>"));
-            stb.Append(PageBuilderAndMenu.clsPageBuilder.FormStart("ftmSettings", "Id", "Post"));
-            stb.Append(Invariant($"Debug Logging Enabled:{FormCheckBox(DebugLoggingId, string.Empty, this.pluginConfig.DebugLogging, true)}"));
-            stb.Append(PageBuilderAndMenu.clsPageBuilder.FormEnd());
-            stb.Append(Invariant($"</td></tr>"));
+            return b.Build();
+        }
 
-            stb.Append(Invariant($"<tr><td colspan=5></td></tr>"));
-            stb.Append(@"<tr height='5'><td colspan=5></td></tr>");
-            stb.Append(@" </table>");
-            stb.Append(@"</div>");
+        protected string PageTypeButton(string name, string label, string type, string deviceId = null)
+        {
+            var b = new clsJQuery.jqButton(name, label, PageName, false)
+            {
+                id = NameToIdWithPrefix(name),
+                url = Invariant($"/{HttpUtility.UrlEncode(ConfigPage.Name)}?{PageTypeId}={HttpUtility.UrlEncode(type)}&{DeviceIdId}={HttpUtility.UrlEncode(deviceId ?? string.Empty)}"),
+            };
 
-            return stb.ToString();
+            return b.Build();
+        }
+
+        private static string GetResolutionId(DeviceType deviceType)
+        {
+            return deviceType.ToString() + "Resolution";
+        }
+
+        private static string NameToId(string name)
+        {
+            return name.Replace(' ', '_');
+        }
+
+        private static string NameToIdWithPrefix(string name)
+        {
+            return Invariant($"{IdPrefix}{NameToId(name)}");
         }
 
         private string BuildAddNewWebPageBody([AllowNull]MPowerDevice device)
@@ -275,7 +279,7 @@ namespace Hspi
 
             StringBuilder stb = new StringBuilder();
 
-            stb.Append(PageBuilderAndMenu.clsPageBuilder.FormStart("ftmDeviceChange", "IdChange", "Post"));
+            stb.Append(FormStart("ftmDeviceChange", "IdChange", "Post"));
 
             stb.Append(@"<div>");
             stb.Append(@"<table class='full_width_table'>");
@@ -301,14 +305,14 @@ namespace Hspi
                 var deviceType = (DeviceType)item;
                 string description = EnumHelper.GetDescription(deviceType);
                 if (deviceType == DeviceType.Output) continue;
-                stb.Append(Invariant($"<tr><td class='tablecell'>{description} Resolution:</td><td class='tablecell' colspan=2>"));
+                stb.Append(Invariant($"<tr><td class='tablecell'>{HtmlEncode(description)} Resolution:</td><td class='tablecell' colspan=2>"));
                 stb.Append(HtmlTextBox(GetResolutionId(deviceType),
                                         enabledTypes.Contains(deviceType) ? resolution[deviceType].ToString(CultureInfo.InvariantCulture) :
                                                 PluginConfig.GetDefaultResolution(deviceType).ToString(CultureInfo.InvariantCulture),
                                         10));
                 stb.Append("&nbsp;");
-                stb.Append(PluginConfig.GetUnits(deviceType));
-                stb.Append("</td></tr> ");
+                stb.Append(HtmlEncode(PluginConfig.GetUnits(deviceType)));
+                stb.Append("</td></tr>");
             }
             stb.Append(@"<tr><td class='tablecell'>Enabled Ports</td><td class='tablecell' colspan=2>");
             foreach (var item in Enumerable.Range(1, PortsMax))
@@ -331,81 +335,85 @@ namespace Hspi
             stb.Append("<tr height='5'><td colspan=3></td></tr>");
             stb.Append(@" </table>");
             stb.Append(@"</div>");
-            stb.Append(PageBuilderAndMenu.clsPageBuilder.FormEnd());
+            stb.Append(FormEnd());
 
             return stb.ToString();
         }
 
-        private static string NameToId(string name)
+        private string BuildMainWebPageBody()
         {
-            return name.Replace(' ', '_');
-        }
+            StringBuilder stb = new StringBuilder();
 
-        private static string NameToIdWithPrefix(string name)
-        {
-            return Invariant($"{IdPrefix}{NameToId(name)}");
-        }
+            stb.Append(@"<div>");
+            stb.Append(@"<table class='full_width_table'>");
+            stb.Append("<tr height='5'><td colspan=5></td></tr>");
+            stb.Append("<tr><td class='tableheader' colspan=5>Devices</td></tr>");
+            stb.Append(@"<tr><td class='tablecolumn'>Name</td>" +
+                        "<td class='tablecolumn'>Device IP Address</td>" +
+                        "<td class='tablecolumn'>Enabled Devices</td>" +
+                        "<td class='tablecolumn'>Enabled Ports</td>" +
+                        "<td class='tablecolumn'></td></tr>");
 
-        protected static string HtmlTextBox(string name, string defaultText, int size = 25, string type = "text", bool @readonly = false)
-        {
-            return Invariant($"<input type=\'{type}\' id=\'{NameToIdWithPrefix(name)}\' size=\'{size}\' name=\'{name}\' value=\'{defaultText}\' {(@readonly ? "readonly" : string.Empty)}>");
-        }
-
-        protected string FormCheckBox(string name, string label, bool @checked, bool autoPostBack = false)
-        {
-            var cb = new clsJQuery.jqCheckBox(name, label, PageName, true, true)
+            foreach (var device in pluginConfig.Devices)
             {
-                id = NameToIdWithPrefix(name),
-                @checked = @checked,
-                autoPostBack = autoPostBack,
-            };
-            return cb.Build();
+                stb.Append(@"<tr>");
+                stb.Append(Invariant($"<td class='tablecell'>{HtmlEncode(device.Value.Name)}</td>"));
+                stb.Append(Invariant($"<td class='tablecell'>{HtmlEncode(device.Value.DeviceIP)}</td>"));
+                stb.Append(@"<td class='tablecell'>");
+                foreach (var item in device.Value.EnabledPorts)
+                {
+                    stb.Append(Invariant($"{HtmlEncode(item)}<br>"));
+                }
+
+                stb.Append("</td>");
+                stb.Append(@"<td class='tablecell'>");
+                foreach (var item in System.Enum.GetValues(typeof(DeviceType)))
+                {
+                    if (device.Value.EnabledTypes.Contains((DeviceType)item))
+                    {
+                        string description = EnumHelper.GetDescription((Enum)item);
+                        stb.Append(Invariant($"{HtmlEncode(description)}<br>"));
+                    }
+                }
+
+                stb.Append("</td>");
+                stb.Append(Invariant($"<td class='tablecell'>{PageTypeButton(Invariant($"Edit{device.Key}"), "Edit", EditDevicePageType, deviceId: device.Key)}</td></tr>"));
+            }
+            stb.Append(Invariant($"<tr><td colspan=5>{PageTypeButton("Add New Device", AddNewName, EditDevicePageType)}</td><td></td></tr>"));
+            stb.Append("<tr height='5'><td colspan=5></td></tr>");
+            stb.Append(Invariant($"<tr><td colspan=5>"));
+            stb.Append(FormStart("ftmSettings", "Id", "Post"));
+            stb.Append(Invariant($"Debug Logging Enabled:{FormCheckBox(DebugLoggingId, string.Empty, this.pluginConfig.DebugLogging, true)}"));
+            stb.Append(FormEnd());
+            stb.Append(Invariant($"</td></tr>"));
+
+            stb.Append(Invariant($"<tr><td colspan=5></td></tr>"));
+            stb.Append(@"<tr height='5'><td colspan=5></td></tr>");
+            stb.Append(@" </table>");
+            stb.Append(@"</div>");
+
+            return stb.ToString();
         }
 
-        protected string PageTypeButton(string name, string label, string type, string deviceId = null)
-        {
-            var b = new clsJQuery.jqButton(name, label, PageName, false)
-            {
-                id = NameToIdWithPrefix(name),
-                url = Invariant($"/{HttpUtility.UrlEncode(ConfigPage.Name)}?{PageTypeId}={HttpUtility.UrlEncode(type)}&{DeviceIdId}={HttpUtility.UrlEncode(deviceId ?? string.Empty)}"),
-            };
-
-            return b.Build();
-        }
-
-        protected string FormPageButton(string name, string label)
-        {
-            var b = new clsJQuery.jqButton(name, label, PageName, true)
-            {
-                id = NameToIdWithPrefix(name),
-            };
-
-            return b.Build();
-        }
-
-        private static string GetResolutionId(DeviceType deviceType)
-        {
-            return deviceType.ToString() + "Resolution";
-        }
-
-        private const string UserNameId = "UserNameId";
-        private const string PasswordId = "PasswordId";
-        private const string SaveDeviceName = "SaveButton";
-        private const string DeviceIdId = "DeviceIdId";
-        private const string PageTypeId = "type";
         private const string AddNewName = "Add New";
+        private const string CancelDeviceName = "CancelDeviceName";
         private const string DebugLoggingId = "DebugLoggingId";
+        private const string DeleteDeviceName = "DeleteDeviceName";
+        private const string DeviceIdId = "DeviceIdId";
         private const string DeviceIPId = "DeviceIPId";
-        private const string SaveErrorDivId = "message_id";
+        private const string EditDevicePageType = "addNew";
+        private const string IdPrefix = "id_";
         private const string ImageDivId = "image_id";
+        private const string NameId = "NameId";
+        private const string PageTypeId = "type";
+        private const string PasswordId = "PasswordId";
+        private const int PortsMax = 8;
         private const string RefreshIntervalId = "RefreshIntervalId";
+        private const string SaveDeviceName = "SaveButton";
+        private const string SaveErrorDivId = "message_id";
+        private const string UserNameId = "UserNameId";
         private static readonly string pageName = Invariant($"{PluginData.PlugInName} Configuration").Replace(' ', '_');
         private readonly IHSApplication HS;
         private readonly PluginConfig pluginConfig;
-        private const string DeleteDeviceName = "DeleteDeviceName";
-        private const string CancelDeviceName = "CancelDeviceName";
-        private const string NameId = "NameId";
-        private const string IdPrefix = "id_";
-        private const int PortsMax = 8;
     }
 }
