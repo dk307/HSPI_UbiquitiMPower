@@ -1,16 +1,16 @@
-﻿using HomeSeerAPI;
+using HomeSeerAPI;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using static System.FormattableString;
 
 namespace Hspi
 {
-    using static System.FormattableString;
-
     /// <summary>
     /// Class to store PlugIn Configuration
     /// </summary>
@@ -83,14 +83,14 @@ namespace Hspi
         /// <value>
         /// The API key.
         /// </value>
-        public IReadOnlyDictionary<string, MPowerDevice> Devices
+        public ImmutableDictionary<string, MPowerDevice> Devices
         {
             get
             {
                 configLock.EnterReadLock();
                 try
                 {
-                    return new Dictionary<string, MPowerDevice>(devices);
+                    return devices.ToImmutableDictionary();
                 }
                 finally
                 {

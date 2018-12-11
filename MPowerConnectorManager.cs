@@ -2,18 +2,18 @@ using HomeSeerAPI;
 using Hspi.Connector.Model;
 using Hspi.DeviceData;
 using Hspi.Exceptions;
+using Nito.AsyncEx;
+using Nito.AsyncEx.Synchronous;
 using NullGuard;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.FormattableString;
 
 namespace Hspi.Connector
 {
-    using static System.FormattableString;
-
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
     internal class MPowerConnectorManager : IDisposable
     {
@@ -23,19 +23,15 @@ namespace Hspi.Connector
             this.Device = device;
             rootDeviceData = new DeviceRootDeviceManager(device.Name, device.Id, this.HS);
 
-            combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken, instanceCancellationSource.Token);
-            runTask = Task.Factory.StartNew(ManageConnection, Token);
+            combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken);
+            runTask = Task.Factory.StartNew(ManageConnection,
+                                                Token,
+                                                TaskCreationOptions.LongRunning,
+                                                TaskScheduler.Current).WaitAndUnwrapException();
             processTask = Task.Factory.StartNew(ProcessDeviceUpdates,
                                                 Token,
                                                 TaskCreationOptions.LongRunning,
-                                                TaskScheduler.Current);
-        }
-
-        public void Cancel()
-        {
-            instanceCancellationSource.Cancel();
-            runTask.Wait();
-            processTask.Wait();
+                                                TaskScheduler.Current).WaitAndUnwrapException();
         }
 
         public async Task HandleCommand(DeviceIdentifier deviceIdentifier, double value, ePairControlUse control)
@@ -48,22 +44,17 @@ namespace Hspi.Connector
             // This function runs in separate thread than main run
 
             MPowerConnector connectorCopy;
-            await rootDeviceDataLock.WaitAsync(Token);
-            try
+            using (var sync = await rootDeviceDataLock.LockAsync(Token).ConfigureAwait(false))
             {
                 connectorCopy = connector;
                 if (connectorCopy == null)
                 {
                     throw new HspiException(Invariant($"No connection to Device for {Device.DeviceIP}"));
                 }
-                await rootDeviceData.HandleCommand(deviceIdentifier, Token, connectorCopy, value, control);
-            }
-            finally
-            {
-                rootDeviceDataLock.Release();
+                await rootDeviceData.HandleCommand(deviceIdentifier, Token, connectorCopy, value, control).ConfigureAwait(false);
             }
 
-            await connectorCopy.UpdateAllSensorData(Token);
+            await connectorCopy.UpdateAllSensorData(Token).ConfigureAwait(false);
         }
 
         private async Task ManageConnection()
@@ -83,33 +74,29 @@ namespace Hspi.Connector
 
         private async Task ProcessDeviceUpdates()
         {
-            try
+            while (!Token.IsCancellationRequested)
             {
-                while (!Token.IsCancellationRequested)
+                var sensorData = await changedPorts.DequeueAsync(Token).ConfigureAwait(false);
+                using (var sync = await rootDeviceDataLock.LockAsync(Token).ConfigureAwait(false))
                 {
-                    if (changedPorts.TryTake(out var sensorData, -1, Token))
+                    try
                     {
-                        await rootDeviceDataLock.WaitAsync(Token);
-                        try
+                        if (Device.EnabledPorts.Contains(sensorData.Port))
                         {
-                            if (Device.EnabledPorts.Contains(sensorData.Port))
-                            {
-                                rootDeviceData.ProcessSensorData(Device, sensorData);
-                            }
+                            rootDeviceData.ProcessSensorData(Device, sensorData);
                         }
-                        catch (Exception ex)
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.IsCancelException())
                         {
-                            Trace.TraceWarning(Invariant($"Failed to update Sensor Data for Port {sensorData.Port} on {Device.DeviceIP} with {ex.Message}"));
+                            throw;
                         }
-                        finally
-                        {
-                            rootDeviceDataLock.Release();
-                        }
+
+                        Trace.TraceWarning(Invariant($"Failed to update Sensor Data for Port {sensorData.Port} on {Device.DeviceIP} with {ex.Message}"));
                     }
                 }
             }
-            catch (OperationCanceledException)
-            { }
         }
 
         private async Task CheckConnection()
@@ -120,7 +107,7 @@ namespace Hspi.Connector
 
                 if (destroyConnection)
                 {
-                    await DestroyConnection();
+                    await DestroyConnection().ConfigureAwait(false);
                 }
                 else
                 {
@@ -130,8 +117,13 @@ namespace Hspi.Connector
                     }
                     catch (Exception ex)
                     {
+                        if (ex.IsCancelException())
+                        {
+                            throw;
+                        }
+
                         Trace.TraceWarning(Invariant($"Failed to Get Full Sensor Data from {Device.DeviceIP} with {ex.Message}"));
-                        await DestroyConnection();
+                        await DestroyConnection().ConfigureAwait(false);
                     }
                 }
             }
@@ -237,7 +229,7 @@ namespace Hspi.Connector
                 {
                     foreach (var data in portsChanged)
                     {
-                        changedPorts.Add(data, Token);
+                        changedPorts.Enqueue(data, Token);
                     }
                 }
                 catch (OperationCanceledException)
@@ -258,15 +250,12 @@ namespace Hspi.Connector
             {
                 if (disposing)
                 {
-                    instanceCancellationSource.Cancel();
-                    instanceCancellationSource.Dispose();
+                    combinedCancellationSource.Cancel();
+                    runTask.WaitWithoutException();
+                    processTask.WaitWithoutException();
                     combinedCancellationSource.Dispose();
 
-                    runTask.Dispose();
-                    processTask.Dispose();
-                    changedPorts.Dispose();
                     DisposeConnector();
-                    rootDeviceDataLock.Dispose();
                 }
 
                 disposedValue = true;
@@ -283,12 +272,11 @@ namespace Hspi.Connector
         private CancellationToken Token => combinedCancellationSource.Token;
         private volatile MPowerConnector connector;
         private readonly CancellationTokenSource combinedCancellationSource;
-        private readonly CancellationTokenSource instanceCancellationSource = new CancellationTokenSource();
         private readonly IHSApplication HS;
-        private readonly BlockingCollection<SensorData> changedPorts = new BlockingCollection<SensorData>();
+        private readonly AsyncProducerConsumerQueue<SensorData> changedPorts = new AsyncProducerConsumerQueue<SensorData>();
         private readonly DeviceRootDeviceManager rootDeviceData;
         private readonly Task runTask;
         private readonly Task processTask;
-        private readonly SemaphoreSlim rootDeviceDataLock = new SemaphoreSlim(1);
+        private readonly AsyncLock rootDeviceDataLock = new AsyncLock();
     }
 }

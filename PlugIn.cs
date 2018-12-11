@@ -7,11 +7,10 @@ using Scheduler.Classes;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static System.FormattableString;
 
 namespace Hspi
 {
-    using static System.FormattableString;
-
     /// <summary>
     /// Plugin class for Ubiquiti mPower
     /// </summary>
@@ -66,7 +65,6 @@ namespace Hspi
                     {
                         if (!device.Value.Equals(oldConnector.Device))
                         {
-                            oldConnector.Cancel();
                             oldConnector.Dispose();
                             connectorManager[device.Key] = new MPowerConnectorManager(HS, device.Value, ShutdownCancellationToken);
                         }
@@ -83,7 +81,6 @@ namespace Hspi
                 {
                     if (!currentDevices.ContainsKey(deviceKeyPair.Key))
                     {
-                        deviceKeyPair.Value.Cancel();
                         deviceKeyPair.Value.Dispose();
                         removalList.Add(deviceKeyPair.Key);
                     }
@@ -173,7 +170,6 @@ namespace Hspi
 
                 if (deviceIdentifier != null)
                 {
-
                     foreach (var device in pluginConfig.Devices)
                     {
                         if (device.Key == deviceIdentifier.DeviceId)
@@ -182,9 +178,9 @@ namespace Hspi
 
                             stb.Append(@"<table style='width:100%;border-spacing:0px;'");
                             stb.Append("<tr height='5'><td style='width:25%'></td><td style='width:20%'></td><td style='width:55%'></td></tr>");
-                            stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{device.Value.Name}</td></tr>"));
-                            stb.Append(Invariant($"<tr><td class='tablecell'>Device IP:</td><td class='tablecell' colspan=2>{device.Value.DeviceIP}</td></tr>"));
-                            stb.Append(Invariant($"<tr><td class='tablecell'>Port:</td><td class='tablecell' colspan=2>{deviceIdentifier.Port}</td></tr>"));
+                            stb.Append(Invariant($"<tr><td class='tablecell'>Name:</td><td class='tablecell' colspan=2>{ConfigPage.HtmlEncode(device.Value.Name)}</td></tr>"));
+                            stb.Append(Invariant($"<tr><td class='tablecell'>Device IP:</td><td class='tablecell' colspan=2>{ConfigPage.HtmlEncode(device.Value.DeviceIP)}</td></tr>"));
+                            stb.Append(Invariant($"<tr><td class='tablecell'>Port:</td><td class='tablecell' colspan=2>{ConfigPage.HtmlEncode(deviceIdentifier.Port)}</td></tr>"));
                             stb.Append(Invariant($"<tr><td class='tablecell'>Type:</td><td class='tablecell' colspan=2>{EnumHelper.GetDescription(deviceIdentifier.DeviceType)}</td></tr>"));
                             stb.Append(Invariant($"</td><td></td></tr>"));
                             stb.Append("<tr height='5'><td colspan=3></td></tr>");
@@ -244,7 +240,6 @@ namespace Hspi
 
                 foreach (var deviceKeyPair in connectorManager)
                 {
-                    deviceKeyPair.Value.Cancel();
                     deviceKeyPair.Value.Dispose();
                 }
 
@@ -257,7 +252,7 @@ namespace Hspi
         }
 
         private readonly object connectorManagerLock = new object();
-        private readonly IDictionary<string, MPowerConnectorManager> connectorManager = new Dictionary<string, MPowerConnectorManager>();
+        private readonly Dictionary<string, MPowerConnectorManager> connectorManager = new Dictionary<string, MPowerConnectorManager>();
         private ConfigPage configPage;
         private PluginConfig pluginConfig;
         private bool disposedValue = false;

@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Hspi
 {
@@ -23,6 +24,12 @@ namespace Hspi
                 default:
                     return ex.Message;
             }
+        }
+
+        public static bool IsCancelException(this Exception ex)
+        {
+            return (ex is TaskCanceledException) ||
+                   (ex is OperationCanceledException);
         }
     };
 }
