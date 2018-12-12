@@ -81,7 +81,7 @@ namespace Hspi.DeviceData
                 throw new HspiException(Invariant($"{deviceIdentifier.Address} Not Found."));
             }
 
-            await deviceData.HandleCommand(connector, token, value, control);
+            await deviceData.HandleCommand(connector, token, value, control).ConfigureAwait(false);
         }
 
         private void GetCurrentDevices()
@@ -255,6 +255,6 @@ namespace Hspi.DeviceData
         private readonly string deviceName;
         private readonly IHSApplication HS;
         private int? parentRefId = null;
-        private readonly IDictionary<string, DeviceData> currentChildDevices = new Dictionary<string, DeviceData>();
+        private readonly Dictionary<string, DeviceData> currentChildDevices = new Dictionary<string, DeviceData>();
     };
 }

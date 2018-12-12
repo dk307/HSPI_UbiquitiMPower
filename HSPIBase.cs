@@ -241,6 +241,7 @@ namespace Hspi
             [AllowNull]string user,
             int userRights) => Enums.ConfigDevicePostReturn.DoneAndCancel;
 
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "hsTraceListener")]
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)

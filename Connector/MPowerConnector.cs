@@ -277,7 +277,7 @@ namespace Hspi.Connector
             catch (Exception ex)
             {
                 Interlocked.Increment(ref totalErrors);
-                Trace.TraceWarning(Invariant($"Failed to process Websocket data with {ex.Message}"));
+                Trace.TraceWarning(Invariant($"Failed to process Websocket data with {ex.GetFullMessage()}"));
             }
         }
 

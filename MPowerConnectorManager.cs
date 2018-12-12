@@ -15,7 +15,7 @@ using static System.FormattableString;
 namespace Hspi.Connector
 {
     [NullGuard(ValidationFlags.Arguments | ValidationFlags.NonPublic)]
-    internal class MPowerConnectorManager : IDisposable
+    internal sealed class MPowerConnectorManager : IDisposable
     {
         public MPowerConnectorManager(IHSApplication HS, MPowerDevice device, CancellationToken shutdownToken)
         {
@@ -64,7 +64,7 @@ namespace Hspi.Connector
                 // connect if needed
                 await Connect().ConfigureAwait(false);
 
-                // sleep for 120 seconds or Close
+                // sleep for 30 seconds or Close
                 await SleepForIntervalOrClose().ConfigureAwait(false);
 
                 // Check for connection health
@@ -182,7 +182,7 @@ namespace Hspi.Connector
 
         private async Task SleepForIntervalOrClose()
         {
-            TimeSpan delay = TimeSpan.FromSeconds(120);
+            TimeSpan delay = TimeSpan.FromSeconds(30);
             if (connector != null)
             {
                 using (var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(Token, connector.ConnectionClosed))
@@ -213,6 +213,10 @@ namespace Hspi.Connector
                 }
                 catch (Exception ex)
                 {
+                    if (ex.IsCancelException())
+                    {
+                        throw;
+                    }
                     Trace.TraceWarning(Invariant($"Failed to Connect to {Device.DeviceIP} with {ex.Message}"));
                     newConnector.PortsChanged -= Connector_PortsChanged;
 
@@ -244,7 +248,7 @@ namespace Hspi.Connector
 
         public MPowerDevice Device { get; }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
@@ -253,9 +257,8 @@ namespace Hspi.Connector
                     combinedCancellationSource.Cancel();
                     runTask.WaitWithoutException();
                     processTask.WaitWithoutException();
-                    combinedCancellationSource.Dispose();
-
                     DisposeConnector();
+                    combinedCancellationSource.Dispose();
                 }
 
                 disposedValue = true;
