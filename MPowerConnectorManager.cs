@@ -24,11 +24,11 @@ namespace Hspi.Connector
             rootDeviceData = new DeviceRootDeviceManager(device.Name, device.Id, this.HS);
 
             combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken);
-            runTask = Task.Factory.StartNew(ManageConnection,
+            Task.Factory.StartNew(ManageConnection,
                                                 Token,
                                                 TaskCreationOptions.LongRunning,
                                                 TaskScheduler.Current).WaitAndUnwrapException();
-            processTask = Task.Factory.StartNew(ProcessDeviceUpdates,
+            Task.Factory.StartNew(ProcessDeviceUpdates,
                                                 Token,
                                                 TaskCreationOptions.LongRunning,
                                                 TaskScheduler.Current).WaitAndUnwrapException();
@@ -255,8 +255,6 @@ namespace Hspi.Connector
                 if (disposing)
                 {
                     combinedCancellationSource.Cancel();
-                    runTask.WaitWithoutException();
-                    processTask.WaitWithoutException();
                     DisposeConnector();
                     combinedCancellationSource.Dispose();
                 }
@@ -278,8 +276,6 @@ namespace Hspi.Connector
         private readonly IHSApplication HS;
         private readonly AsyncProducerConsumerQueue<SensorData> changedPorts = new AsyncProducerConsumerQueue<SensorData>();
         private readonly DeviceRootDeviceManager rootDeviceData;
-        private readonly Task runTask;
-        private readonly Task processTask;
         private readonly AsyncLock rootDeviceDataLock = new AsyncLock();
     }
 }
