@@ -29,7 +29,8 @@ namespace Hspi
         public static bool IsCancelException(this Exception ex)
         {
             return (ex is TaskCanceledException) ||
-                   (ex is OperationCanceledException);
+                   (ex is OperationCanceledException) ||
+                   (ex is ObjectDisposedException);
         }
     };
 }

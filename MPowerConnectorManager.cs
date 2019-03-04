@@ -3,7 +3,6 @@ using Hspi.Connector.Model;
 using Hspi.DeviceData;
 using Hspi.Exceptions;
 using Nito.AsyncEx;
-using Nito.AsyncEx.Synchronous;
 using NullGuard;
 using System;
 using System.Collections.Generic;
@@ -20,18 +19,18 @@ namespace Hspi.Connector
         public MPowerConnectorManager(IHSApplication HS, MPowerDevice device, CancellationToken shutdownToken)
         {
             this.HS = HS;
-            this.Device = device;
+            Device = device;
             rootDeviceData = new DeviceRootDeviceManager(device.Name, device.Id, this.HS);
 
             combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken);
             Task.Factory.StartNew(ManageConnection,
                                                 Token,
                                                 TaskCreationOptions.LongRunning,
-                                                TaskScheduler.Current).WaitAndUnwrapException();
+                                                TaskScheduler.Current);
             Task.Factory.StartNew(ProcessDeviceUpdates,
                                                 Token,
                                                 TaskCreationOptions.LongRunning,
-                                                TaskScheduler.Current).WaitAndUnwrapException();
+                                                TaskScheduler.Current);
         }
 
         public async Task HandleCommand(DeviceIdentifier deviceIdentifier, double value, ePairControlUse control)
@@ -59,43 +58,67 @@ namespace Hspi.Connector
 
         private async Task ManageConnection()
         {
-            while (!Token.IsCancellationRequested)
+            try
             {
-                // connect if needed
-                await Connect().ConfigureAwait(false);
+                while (!Token.IsCancellationRequested)
+                {
+                    // connect if needed
+                    await Connect().ConfigureAwait(false);
 
-                // sleep for 30 seconds or Close
-                await SleepForIntervalOrClose().ConfigureAwait(false);
+                    // sleep for 30 seconds or Close
+                    await SleepForIntervalOrClose().ConfigureAwait(false);
 
-                // Check for connection health
-                await CheckConnection().ConfigureAwait(false);
+                    // Check for connection health
+                    await CheckConnection().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex.IsCancelException())
+                {
+                    throw;
+                }
+
+                Trace.TraceError(Invariant($"ManageConnection for {Device.DeviceIP} failed with {ex.GetFullMessage()}. Restarting ..."));
             }
         }
 
         private async Task ProcessDeviceUpdates()
         {
-            while (!Token.IsCancellationRequested)
+            try
             {
-                var sensorData = await changedPorts.DequeueAsync(Token).ConfigureAwait(false);
-                using (var sync = await rootDeviceDataLock.LockAsync(Token).ConfigureAwait(false))
+                while (!Token.IsCancellationRequested)
                 {
-                    try
+                    var sensorData = await changedPorts.DequeueAsync(Token).ConfigureAwait(false);
+                    using (var sync = await rootDeviceDataLock.LockAsync(Token).ConfigureAwait(false))
                     {
-                        if (Device.EnabledPorts.Contains(sensorData.Port))
+                        try
                         {
-                            rootDeviceData.ProcessSensorData(Device, sensorData);
+                            if (Device.EnabledPorts.Contains(sensorData.Port))
+                            {
+                                rootDeviceData.ProcessSensorData(Device, sensorData);
+                            }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex.IsCancelException())
+                        catch (Exception ex)
                         {
-                            throw;
-                        }
+                            if (ex.IsCancelException())
+                            {
+                                throw;
+                            }
 
-                        Trace.TraceWarning(Invariant($"Failed to update Sensor Data for Port {sensorData.Port} on {Device.DeviceIP} with {ex.Message}"));
+                            Trace.TraceWarning(Invariant($"Failed to update Sensor Data for Port {sensorData.Port} on {Device.DeviceIP} with {ex.GetFullMessage()}"));
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                if (ex.IsCancelException())
+                {
+                    throw;
+                }
+
+                Trace.TraceError(Invariant($"ProcessDeviceUpdates for {Device.DeviceIP} failed with {ex.GetFullMessage()}. Restarting ..."));
             }
         }
 
@@ -122,7 +145,7 @@ namespace Hspi.Connector
                             throw;
                         }
 
-                        Trace.TraceWarning(Invariant($"Failed to Get Full Sensor Data from {Device.DeviceIP} with {ex.Message}"));
+                        Trace.TraceWarning(Invariant($"Failed to Get Full Sensor Data from {Device.DeviceIP} with {ex.GetFullMessage()}"));
                         await DestroyConnection().ConfigureAwait(false);
                     }
                 }
